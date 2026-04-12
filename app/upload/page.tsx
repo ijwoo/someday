@@ -38,7 +38,13 @@ type Region = {
   name: string; lat: number; lng: number; ti: number
   sub?: string; photoCount?: number
 }
-type Step = 'idle' | 'analyzed' | 'duration'
+type PhotoResult = {
+  file: File
+  status: 'gps' | 'ai' | 'none'
+  lat?: number
+  lng?: number
+}
+type Step = 'idle' | 'results' | 'analyzed' | 'duration'
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371
@@ -57,6 +63,7 @@ export default function UploadPage() {
   const [loadTitle, setLoadTitle] = useState('분석하는 중')
   const [loadSub, setLoadSub] = useState('잠시만 기다려주세요')
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [photoResults, setPhotoResults] = useState<PhotoResult[]>([])
   const [detectedRegions, setDetectedRegions] = useState<Region[]>([])
   const [pendingRegion, setPendingRegion] = useState<Region | null>(null)
   // duration step options
@@ -68,69 +75,79 @@ export default function UploadPage() {
   async function handleAnalyze() {
     setLoading(true)
     setLoadTitle('사진 분석 중')
-    setLoadSub(`${uploadedFiles.length}장을 처리하고 있어요`)
+    setLoadSub(`0 / ${uploadedFiles.length}장 처리 중`)
 
     try {
-      const gpsPoints: { lat: number; lng: number }[] = []
-      for (const file of uploadedFiles) {
-        const gps = await extractGPS(file)
-        if (gps) gpsPoints.push(gps)
+      const results: PhotoResult[] = []
+
+      // Phase 1: GPS 추출
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        setLoadSub(`${i + 1} / ${uploadedFiles.length}장 GPS 확인 중`)
+        const gps = await extractGPS(uploadedFiles[i])
+        results.push({
+          file: uploadedFiles[i],
+          status: gps ? 'gps' : 'none',
+          lat: gps?.lat,
+          lng: gps?.lng,
+        })
       }
 
-      if (gpsPoints.length >= 2) {
-        let maxDist = 0
-        for (let i = 0; i < gpsPoints.length; i++) {
-          for (let j = i + 1; j < gpsPoints.length; j++) {
-            maxDist = Math.max(maxDist, haversineKm(
-              gpsPoints[i].lat, gpsPoints[i].lng,
-              gpsPoints[j].lat, gpsPoints[j].lng,
-            ))
-          }
-        }
-        if (maxDist > 150) {
-          showToast('사진들이 서로 다른 지역에서 찍혔어요. 지역을 직접 선택해주세요')
-          setIsManual(true)
-          setDetectedRegions(POPULAR_REGIONS)
-          setLoading(false)
-          setStep('analyzed')
-          return
+      // Phase 2: GPS 없는 사진은 AI로 분석 (최대 3장)
+      const noGpsIdx = results.map((r, i) => r.status === 'none' ? i : -1).filter(i => i >= 0)
+      if (noGpsIdx.length > 0) {
+        setLoadTitle('AI 이미지 분석 중')
+        setLoadSub(`GPS 없는 ${noGpsIdx.length}장을 AI가 분석해요`)
+        for (const i of noGpsIdx.slice(0, 3)) {
+          try {
+            const res = await analyzePhoto(results[i].file)
+            if (res.lat && res.lng) {
+              results[i] = { ...results[i], status: 'ai', lat: res.lat, lng: res.lng }
+            }
+          } catch {}
         }
       }
 
-      let foundLat: number | null = null
-      let foundLng: number | null = null
+      // Phase 3: 위치별 클러스터링 + 지역명 조회
+      setLoadTitle('위치 확인 중')
+      setLoadSub('지역명을 가져오고 있어요')
 
-      if (gpsPoints.length > 0) {
-        foundLat = gpsPoints.reduce((s, p) => s + p.lat, 0) / gpsPoints.length
-        foundLng = gpsPoints.reduce((s, p) => s + p.lng, 0) / gpsPoints.length
-        setLoadTitle('GPS 위치 확인')
-        setLoadSub(`${gpsPoints.length}장에서 위치를 감지했어요`)
-      } else {
-        setLoadTitle('AI 이미지 인식 중')
-        setLoadSub('GPS 정보가 없어 이미지를 분석해요')
+      type Cluster = { lat: number; lng: number; photoCount: number; hasGps: boolean; hasAi: boolean }
+      const clusters: Cluster[] = []
+      for (const r of results) {
+        if (!r.lat || !r.lng) continue
+        const nearby = clusters.find(c => haversineKm(r.lat!, r.lng!, c.lat, c.lng) < 30)
+        if (nearby) {
+          nearby.photoCount++
+          if (r.status === 'gps') nearby.hasGps = true
+          if (r.status === 'ai') nearby.hasAi = true
+        } else {
+          clusters.push({ lat: r.lat, lng: r.lng, photoCount: 1, hasGps: r.status === 'gps', hasAi: r.status === 'ai' })
+        }
+      }
+
+      const regions: Region[] = []
+      for (const c of clusters) {
         try {
-          const result = await analyzePhoto(uploadedFiles[0])
-          if (result.lat && result.lng) { foundLat = result.lat; foundLng = result.lng }
-        } catch { /* Vision 실패 → 수동 선택 */ }
+          const { locationName } = await fetchPlaces(c.lat, c.lng, 'day')
+          const src = c.hasGps && c.hasAi ? 'GPS · AI 추정'
+            : c.hasGps ? 'GPS'
+            : 'AI 추정'
+          regions.push({
+            name: locationName || '감지된 위치',
+            lat: c.lat, lng: c.lng,
+            ti: regions.length % 4,
+            sub: `${src} · 사진 ${c.photoCount}장`,
+            photoCount: c.photoCount,
+          })
+        } catch {
+          regions.push({ name: '감지된 위치', lat: c.lat, lng: c.lng, ti: 0, photoCount: c.photoCount })
+        }
       }
 
-      if (foundLat !== null && foundLng !== null) {
-        setLoadTitle('주변 장소 검색 중')
-        setLoadSub('카카오맵에서 명소를 찾아요')
-        const { locationName } = await fetchPlaces(foundLat, foundLng, 'day')
-        setDetectedRegions([{
-          name: locationName || '감지된 위치',
-          lat: foundLat, lng: foundLng, ti: 0,
-          photoCount: uploadedFiles.length,
-        }])
-        setIsManual(false)
-        setStep('analyzed')
-      } else {
-        showToast('위치를 인식하지 못했어요. 지역을 직접 선택해주세요')
-        setIsManual(true)
-        setDetectedRegions(POPULAR_REGIONS)
-        setStep('analyzed')
-      }
+      setPhotoResults(results)
+      setDetectedRegions(regions)
+      setIsManual(regions.length === 0)
+      setStep('results')
     } catch {
       showToast('분석 중 오류가 발생했어요')
       setIsManual(true)
@@ -191,11 +208,13 @@ export default function UploadPage() {
 
   const headerTitle =
     step === 'duration' ? '여행 옵션 설정'
-    : step === 'analyzed' && isManual ? '지역 선택'
+    : step === 'results' ? '분석 결과'
+    : step === 'analyzed' ? '지역 선택'
     : '사진 분석'
 
   function goBack() {
-    if (step === 'duration') { setStep('analyzed'); return }
+    if (step === 'duration') { setStep(photoResults.length > 0 ? 'results' : 'analyzed'); return }
+    if (step === 'results') { setStep('idle'); setPhotoResults([]); setDetectedRegions([]); return }
     if (step === 'analyzed') { setStep('idle'); setDetectedRegions([]); return }
     router.push('/')
   }
@@ -305,7 +324,114 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* ── ANALYZED: 지역 선택 ── */}
+        {/* ── RESULTS: 사진별 분석 결과 + 위치 선택 ── */}
+        {step === 'results' && (
+          <div style={{ padding: '0 20px 32px', animation: 'slideUp 0.3s ease' }}>
+
+            {/* 사진별 상태 */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', marginBottom: 10, letterSpacing: 0.3, textTransform: 'uppercase' }}>
+                사진별 분석 결과
+              </div>
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 4 } as React.CSSProperties}>
+                {photoResults.map((r, i) => (
+                  <PhotoStatusCell key={i} file={r.file} status={r.status}/>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+                {photoResults.filter(r => r.status === 'gps').length > 0 && (
+                  <span className="chip chip-blue">
+                    📍 GPS {photoResults.filter(r => r.status === 'gps').length}장
+                  </span>
+                )}
+                {photoResults.filter(r => r.status === 'ai').length > 0 && (
+                  <span className="chip chip-teal">
+                    🤖 AI 추정 {photoResults.filter(r => r.status === 'ai').length}장
+                  </span>
+                )}
+                {photoResults.filter(r => r.status === 'none').length > 0 && (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 8,
+                    background: 'rgba(148,163,184,0.12)', color: 'var(--text3)',
+                  }}>
+                    ❓ 위치 불명 {photoResults.filter(r => r.status === 'none').length}장
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* 위치 후보 */}
+            {!isManual && detectedRegions.length > 0 ? (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: -0.3, marginBottom: 4 }}>
+                  어느 지역으로 코스를 짤까요?
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>
+                  감지된 위치 중 하나를 선택하세요
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                  {detectedRegions.map((r, i) => (
+                    <button key={i} className="glass" onClick={() => selectRegion(r)} style={{
+                      width: '100%', padding: '14px 16px',
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      borderRadius: 'var(--r-sm)', cursor: 'pointer',
+                      border: '1px solid rgba(255,255,255,0.9)',
+                      fontFamily: 'inherit', textAlign: 'left',
+                      animation: `itemIn 0.3s ${i * 0.07}s ease both`,
+                    }}>
+                      <div style={{ width: 46, height: 46, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
+                        <PlaceImage name={r.name} width={46} height={46}/>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', letterSpacing: -0.3, marginBottom: 2 }}>{r.name}</div>
+                        {r.sub && <div style={{ fontSize: 11, color: 'var(--text3)' }}>{r.sub}</div>}
+                      </div>
+                      <Icon name="chevron-right" size={16} color="var(--text3)" strokeWidth={1.8}/>
+                    </button>
+                  ))}
+                </div>
+                <button className="btn btn-secondary" style={{ width: '100%' }}
+                  onClick={() => { setIsManual(true); setDetectedRegions(POPULAR_REGIONS) }}>
+                  <Icon name="pin" size={16} color="var(--text)" strokeWidth={1.8}/>
+                  다른 지역 직접 선택하기
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: -0.3, marginBottom: 4 }}>
+                  위치를 인식하지 못했어요
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 14 }}>
+                  인기 여행지에서 선택해주세요
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {POPULAR_REGIONS.map((r, i) => (
+                    <button key={i} className="glass" onClick={() => selectRegion(r)} style={{
+                      width: '100%', padding: '14px 16px',
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      borderRadius: 'var(--r-sm)', cursor: 'pointer',
+                      border: '1px solid rgba(255,255,255,0.9)',
+                      fontFamily: 'inherit', textAlign: 'left',
+                      animation: `itemIn 0.3s ${i * 0.07}s ease both`,
+                    }}>
+                      <div style={{ width: 46, height: 46, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
+                        <PlaceImage name={r.name} width={46} height={46}/>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', letterSpacing: -0.3, marginBottom: 2 }}>{r.name}</div>
+                        {r.sub && <div style={{ fontSize: 11, color: 'var(--text3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sub}</div>}
+                      </div>
+                      <Icon name="chevron-right" size={16} color="var(--text3)" strokeWidth={1.8}/>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── ANALYZED: 지역 선택 (수동) ── */}
         {step === 'analyzed' && (
           <div style={{ padding: '0 20px 32px', animation: 'slideUp 0.3s ease' }}>
             {isManual ? (
@@ -476,6 +602,31 @@ export default function UploadPage() {
       <Loading visible={loading} title={loadTitle} subtitle={loadSub}/>
       <Toast/>
       <BottomNav activeOverride={1}/>
+    </div>
+  )
+}
+
+function PhotoStatusCell({ file, status }: { file: File; status: 'gps' | 'ai' | 'none' }) {
+  const [url, setUrl] = useState<string | null>(null)
+  useEffect(() => {
+    const u = URL.createObjectURL(file)
+    setUrl(u)
+    return () => URL.revokeObjectURL(u)
+  }, [file])
+  if (!url) return <div style={{ width: 72, height: 72, flexShrink: 0, borderRadius: 12, background: 'var(--blue4)' }}/>
+  const badge =
+    status === 'gps' ? { label: 'GPS', bg: 'rgba(59,126,248,0.9)' } :
+    status === 'ai'  ? { label: 'AI',  bg: 'rgba(16,185,129,0.88)' } :
+                       { label: '?',   bg: 'rgba(148,163,184,0.85)' }
+  return (
+    <div style={{ width: 72, height: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+      <div style={{
+        position: 'absolute', bottom: 5, left: '50%', transform: 'translateX(-50%)',
+        background: badge.bg, color: '#fff',
+        fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 6, whiteSpace: 'nowrap',
+      }}>{badge.label}</div>
     </div>
   )
 }
