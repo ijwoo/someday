@@ -9,11 +9,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: '좌표가 없어요' }, { status: 400 });
         }
 
-        // 병렬로 실행
-        const [locationName, places] = await Promise.all([
-            reverseGeocode(lat, lng),
-            searchNearby(lat, lng, tripType),
-        ]);
+        // locationName이 먼저 필요 (광역 검색 쿼리에 지역명 사용)
+        const locationName = await reverseGeocode(lat, lng);
+        const places = await searchNearby(lat, lng, tripType, locationName);
 
         return NextResponse.json({ locationName, places });
 

@@ -3,6 +3,59 @@ const headers = {
     Authorization: `KakaoAK ${process.env.KAKAO_REST_API_KEY}`,
 };
 
+// 프랜차이즈 필터 — 이 단어가 포함된 장소는 제외
+const FRANCHISE_KEYWORDS = [
+    // 카페 체인
+    '스타벅스', '이디야', '투썸플레이스', '메가커피', '컴포즈커피', '파스쿠찌', '할리스',
+    '탐앤탐스', '폴바셋', '빽다방', '커피베이', '더벤티', '엔제리너스', '커피스미스',
+    // 패스트푸드
+    '맥도날드', '롯데리아', '버거킹', 'KFC', '맘스터치', '서브웨이', '쉐이크쉑',
+    // 치킨 체인
+    'BBQ', 'BHC', '교촌치킨', '굽네치킨', '노랑통닭', '처갓집', '호식이',
+    // 베이커리/디저트 체인
+    '파리바게뜨', '뚜레쥬르', '던킨', '배스킨라빈스', '크리스피크림',
+    // 편의점
+    'CU', 'GS25', '세븐일레븐', '이마트24', '미니스톱',
+    // 피자
+    '도미노피자', '피자헛', '피자알볼로', '피자나라',
+    // 기타 체인
+    '올리브영', '다이소', '이마트', '홈플러스', '롯데마트',
+]
+
+function isFranchise(name: string): boolean {
+    return FRANCHISE_KEYWORDS.some(f => name.includes(f))
+}
+
+// Haversine 거리 (미터)
+function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371000
+    const dLat = (lat2 - lat1) * Math.PI / 180
+    const dLng = (lng2 - lng1) * Math.PI / 180
+    const a = Math.sin(dLat / 2) ** 2
+        + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+// 주소에서 지역명 추출 (도/시 수준)
+export function extractRegion(address: string): string {
+    const parts = address.split(' ')
+    if (parts.length === 0) return address
+    let city = parts[0]
+        .replace('특별자치도', '도')
+        .replace('특별자치시', '')
+        .replace('특별시', '')
+        .replace('광역시', '')
+    // 제주도 → 제주
+    if (city === '제주도') city = '제주'
+    if (parts.length >= 2) {
+        const gu = parts[1].replace(/[시군구]$/, '')
+        // 같은 이름이면 (예: 부산 부산) 그냥 city만
+        if (city.startsWith(gu) || gu.startsWith(city)) return city
+        return `${city} ${gu}`
+    }
+    return city
+}
+
 // 좌표 → 주소 변환
 export async function reverseGeocode(lat: number, lng: number): Promise<string> {
     const res = await fetch(
@@ -16,45 +69,147 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string> 
         || '알 수 없는 위치';
 }
 
-// tripType별 검색 설정 (차로 이동 기준)
+// tripType별 검색 설정
 const SEARCH_CONFIG = {
-    day:    { radius: 10000, size: 10 }, // 10km, 카테고리당 10개 → 최대 40개
-    '1n2d': { radius: 15000, size: 12 }, // 15km, 카테고리당 12개 → 최대 48개
-    '2n3d': { radius: 20000, size: 15 }, // 20km (API 최대), 카테고리당 15개 → 최대 60개
+    day:    { radius: 10000, size: 15 },
+    '1n2d': { radius: 15000, size: 15 },
+    '2n3d': { radius: 20000, size: 15 },
 }
 
-// 주변 장소 검색 (카테고리별)
+// 카테고리 검색 (반경 기반 — 당일치기용)
+async function searchByCategory(
+    code: string, label: string,
+    lat: number, lng: number,
+    radius: number, size: number,
+) {
+    const res = await fetch(
+        `${KAKAO_BASE}/v2/local/search/category.json` +
+        `?category_group_code=${code}&x=${lng}&y=${lat}&radius=${radius}&size=${size}&sort=accuracy`,
+        { headers },
+    );
+    const data = await res.json();
+    return (data.documents || [])
+        .filter((d: any) => !isFranchise(d.place_name))
+        .map((d: any) => ({
+            name: d.place_name,
+            address: d.road_address_name || d.address_name,
+            category: label,
+            lat: parseFloat(d.y),
+            lng: parseFloat(d.x),
+            distance: parseInt(d.distance, 10),
+        }));
+}
+
+// 키워드 검색 (반경 기반)
+async function searchByKeyword(
+    query: string, label: string,
+    lat: number, lng: number,
+    radius: number, size: number,
+) {
+    const res = await fetch(
+        `${KAKAO_BASE}/v2/local/search/keyword.json` +
+        `?query=${encodeURIComponent(query)}&x=${lng}&y=${lat}&radius=${radius}&size=${size}&sort=accuracy`,
+        { headers },
+    );
+    const data = await res.json();
+    return (data.documents || [])
+        .filter((d: any) => !isFranchise(d.place_name))
+        .map((d: any) => ({
+            name: d.place_name,
+            address: d.road_address_name || d.address_name,
+            category: label,
+            lat: parseFloat(d.y),
+            lng: parseFloat(d.x),
+            distance: parseInt(d.distance, 10),
+        }));
+}
+
+// 지역명 기반 광역 검색 (반경 제한 없음 — 숙박 여행용)
+async function searchRegional(
+    query: string, label: string,
+    baseLat: number, baseLng: number,
+) {
+    const [r1, r2] = await Promise.all([
+        fetch(
+            `${KAKAO_BASE}/v2/local/search/keyword.json` +
+            `?query=${encodeURIComponent(query)}&size=15&sort=accuracy&page=1`,
+            { headers },
+        ),
+        fetch(
+            `${KAKAO_BASE}/v2/local/search/keyword.json` +
+            `?query=${encodeURIComponent(query)}&size=15&sort=accuracy&page=2`,
+            { headers },
+        ),
+    ])
+    const [d1, d2] = await Promise.all([r1.json(), r2.json()])
+    return [...(d1.documents || []), ...(d2.documents || [])]
+        .filter((d: any) => !isFranchise(d.place_name))
+        .map((d: any) => {
+            const pLat = parseFloat(d.y)
+            const pLng = parseFloat(d.x)
+            return {
+                name: d.place_name,
+                address: d.road_address_name || d.address_name,
+                category: label,
+                lat: pLat,
+                lng: pLng,
+                // 실제 거리 계산 (Haversine)
+                distance: Math.round(haversine(baseLat, baseLng, pLat, pLng)),
+            }
+        })
+}
+
+// 주변 장소 검색
 export async function searchNearby(
     lat: number,
     lng: number,
     tripType: 'day' | '1n2d' | '2n3d' = 'day',
+    locationName = '',
 ) {
     const { radius, size } = SEARCH_CONFIG[tripType] ?? SEARCH_CONFIG.day
-    const categories = [
-        { code: 'AT4', label: '관광명소' },
-        { code: 'FD6', label: '음식점' },
-        { code: 'CE7', label: '카페' },
-        { code: 'CT1', label: '문화시설' },
-    ];
+    const region = extractRegion(locationName)
 
-    const results = await Promise.all(
-        categories.map(async ({ code, label }) => {
-            const res = await fetch(
-                `${KAKAO_BASE}/v2/local/search/category.json` +
-                `?category_group_code=${code}&x=${lng}&y=${lat}&radius=${radius}&size=${size}`,
-                { headers },
-            );
-            const data = await res.json();
-            return (data.documents || []).map((d: any) => ({
-                name: d.place_name,
-                address: d.road_address_name || d.address_name,
-                category: label,
-                lat: parseFloat(d.y),
-                lng: parseFloat(d.x),
-                distance: parseInt(d.distance, 10),
-            }));
-        }),
-    );
+    let all: any[]
 
-    return results.flat();
+    if (tripType === 'day') {
+        // 당일: 반경 기반 검색 (10km, 걷거나 짧은 이동)
+        const [landmarks, culture, food, cafe] = await Promise.all([
+            searchByCategory('AT4', '관광명소', lat, lng, radius, size),
+            searchByCategory('CT1', '문화시설', lat, lng, radius, size),
+            searchByKeyword('맛집', '맛집', lat, lng, radius, size),
+            searchByKeyword('카페', '카페', lat, lng, Math.min(radius, 8000), size),
+        ])
+        all = [...landmarks, ...culture, ...food, ...cafe]
+
+    } else {
+        // 숙박 여행: 광역 검색 (지역명 키워드, 반경 무제한)
+        // 반경 검색과 광역 검색 병행 → 가까운 곳 + 멀리 퍼진 명소 모두 확보
+        const [
+            nearLandmarks, nearCulture, nearFood, nearCafe,
+            wideAttractions, wideFood, wideCafe, wideNature,
+        ] = await Promise.all([
+            // 반경 기반 (가까운 곳 우선 확보)
+            searchByCategory('AT4', '관광명소', lat, lng, radius, size),
+            searchByCategory('CT1', '문화시설', lat, lng, radius, size),
+            searchByKeyword('맛집', '맛집', lat, lng, radius, size),
+            searchByKeyword('카페', '카페', lat, lng, Math.min(radius, 10000), size),
+            // 광역 키워드 검색 (지역 전체 커버)
+            searchRegional(`${region} 관광명소`, '관광명소', lat, lng),
+            searchRegional(`${region} 맛집 현지`, '맛집', lat, lng),
+            searchRegional(`${region} 카페`, '카페', lat, lng),
+            searchRegional(`${region} 자연 명소`, '자연', lat, lng),
+        ])
+        all = [
+            ...nearLandmarks, ...nearCulture, ...nearFood, ...nearCafe,
+            ...wideAttractions, ...wideFood, ...wideCafe, ...wideNature,
+        ]
+    }
+
+    // 중복 제거 (같은 장소명)
+    const seen = new Set<string>()
+    return all.filter(p => {
+        if (seen.has(p.name)) return false
+        seen.add(p.name)
+        return true
+    })
 }

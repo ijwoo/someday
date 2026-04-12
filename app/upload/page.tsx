@@ -17,7 +17,6 @@ const POPULAR_REGIONS = [
   { name: '서울', sub: '홍대 · 성수 · 경복궁 · 익선동', ti: 0, lat: 37.5665, lng: 126.9780 },
   { name: '제주', sub: '협재 · 성산일출봉 · 한라산',    ti: 1, lat: 33.4996, lng: 126.5312 },
   { name: '부산', sub: '해운대 · 감천 · 남포동',         ti: 2, lat: 35.1796, lng: 129.0756 },
-  { name: '교토', sub: '후시미이나리 · 아라시야마',       ti: 3, lat: 34.9671, lng: 135.7727 },
 ]
 
 const TRIP_OPTIONS: { type: TripType; label: string; sub: string; icon: 'sun' | 'moon' | 'star' }[] = [
