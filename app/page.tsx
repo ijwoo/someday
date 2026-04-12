@@ -111,7 +111,7 @@ export default function HomePage() {
       <p style={{
         fontSize: 14, color: 'rgba(255,255,255,0.68)', marginTop: 10,
         textAlign: 'center', lineHeight: 1.7, animation: 'slideUp 0.6s 0.3s ease both',
-      }}>언젠가 가야지 했던 곳들<br/>이제 진짜 가자</p>
+      }}>언젠가 가야지 했던 곳들<br/>이제 진짜 가봐요</p>
       <div style={{ display: 'flex', gap: 8, marginTop: 52, animation: 'slideUp 0.5s 0.44s ease both' }}>
         {[0,1,2].map(i => (
           <div key={i} style={{
