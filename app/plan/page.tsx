@@ -9,7 +9,7 @@ import Icon from '@/components/Icon'
 import BottomNav from '@/components/BottomNav'
 import { fetchPlaces, createCourse } from '@/lib/api'
 import { DEMO_COURSE } from '@/lib/demo'
-import type { TripType, Course, CourseStep, RegenInfo } from '@/types'
+import type { TripType, Theme, Course, CourseStep, RegenInfo } from '@/types'
 
 const TAG = { food:'맛집', view:'뷰맛집', cafe:'카페', culture:'문화' }
 const TAG_COLOR = { food:'chip-rose', view:'chip-blue', cafe:'chip-amber', culture:'chip-teal' }
@@ -43,16 +43,27 @@ export default function PlanPage() {
   const [loading, setLoading] = useState(false)
   const [loadTitle, setLoadTitle] = useState('')
   const [loadSub, setLoadSub] = useState('')
+  const [isDemo, setIsDemo] = useState(false)
+  const [showUnsavedSheet, setShowUnsavedSheet] = useState(false)
+  const [showRegenSheet, setShowRegenSheet] = useState(false)
+  const [regenTheme, setRegenTheme] = useState<Theme>('balanced')
+  const [regenType, setRegenType] = useState<TripType>('day')
   const heroCv = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     try {
-      const c = sessionStorage.getItem('someday-course')
-      const r = sessionStorage.getItem('someday-region')
-      const rg = sessionStorage.getItem('someday-regen')
+      const c = localStorage.getItem('someday-course')
+      const r = localStorage.getItem('someday-region')
+      const rg = localStorage.getItem('someday-regen')
       if (c) setCourse(JSON.parse(c))
       if (r) setRegion(JSON.parse(r))
-      if (rg) setTripType((JSON.parse(rg) as RegenInfo).tripType)
+      if (rg) {
+        const info = JSON.parse(rg) as RegenInfo
+        setTripType(info.tripType)
+        setRegenTheme(info.theme)
+        setRegenType(info.tripType)
+      }
+      if (localStorage.getItem('someday-is-demo')) setIsDemo(true)
     } catch {}
   }, [])
 
@@ -101,30 +112,43 @@ export default function PlanPage() {
   function toggleVisit(order: number) {
     setVisited(prev => {
       const next = new Set(prev)
-      if (next.has(order)) next.delete(order); else next.add(order)
+      const wasIn = next.has(order)
+      if (wasIn) next.delete(order); else next.add(order)
       try { localStorage.setItem(`someday-visited-${course.title}`, JSON.stringify([...next])) } catch {}
+      if (!wasIn && next.size === course.steps.length) {
+        setTimeout(() => showToast('코스 완주! 수고하셨어요 🎉'), 100)
+      }
       return next
     })
   }
 
-  async function handleRegen() {
-    const raw = sessionStorage.getItem('someday-regen')
+  async function handleRegen(overrideTheme?: Theme, overrideType?: TripType) {
+    const raw = localStorage.getItem('someday-regen')
     if (!raw) { showToast('재생성 정보가 없어요'); return }
     const regen: RegenInfo = JSON.parse(raw)
+    const effectiveTheme = overrideTheme ?? regen.theme
+    const effectiveType = overrideType ?? regen.tripType
+    setShowRegenSheet(false)
     setLoading(true)
     setLoadTitle('주변 장소 검색 중')
     setLoadSub('새로운 코스를 위해 장소를 탐색해요')
     try {
-      const { places } = await fetchPlaces(regen.lat, regen.lng, regen.tripType)
+      const { places } = await fetchPlaces(regen.lat, regen.lng, effectiveType)
       setLoadTitle('코스 재설계 중')
       setLoadSub('AI가 다른 코스를 만들고 있어요')
       const newCourse = await createCourse(
         regen.locationName, regen.lat, regen.lng, places,
-        regen.tripType, regen.theme, regen.startTime, true, // nocache=true
+        effectiveType, effectiveTheme, regen.startTime, true,
       )
       setCourse(newCourse)
+      setTripType(effectiveType)
       setVisited(new Set())
-      sessionStorage.setItem('someday-course', JSON.stringify(newCourse))
+      localStorage.setItem('someday-course', JSON.stringify(newCourse))
+      localStorage.setItem('someday-regen', JSON.stringify({ ...regen, theme: effectiveTheme, tripType: effectiveType }))
+      localStorage.removeItem('someday-is-demo')
+      setIsDemo(false)
+      setRegenTheme(effectiveTheme)
+      setRegenType(effectiveType)
       setDayIdx(0)
       showToast('새 코스가 만들어졌어요')
     } catch {
@@ -155,7 +179,10 @@ export default function PlanPage() {
           background:'linear-gradient(to bottom, rgba(10,20,60,0.08) 0%, rgba(10,20,60,0.82) 100%)',
           display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'20px 22px',
         }}>
-          <button className="icon-btn" onClick={() => router.push('/upload')} style={{
+          <button className="icon-btn" onClick={() => {
+            if (!saved && !isDemo) setShowUnsavedSheet(true)
+            else router.push('/')
+          }} style={{
             position:'absolute', left:16,
             background:'rgba(255,255,255,0.18)', border:'1px solid rgba(255,255,255,0.28)',
             top:'max(16px, env(safe-area-inset-top))',
@@ -207,6 +234,21 @@ export default function PlanPage() {
           </div>
         </div>
       </div>
+
+      {/* 데모 코스 안내 배너 */}
+      {isDemo && (
+        <div style={{
+          display:'flex', alignItems:'center', gap:10,
+          padding:'10px 20px', flexShrink:0,
+          background:'rgba(245,158,11,0.08)',
+          borderBottom:'1px solid rgba(245,158,11,0.15)',
+        }}>
+          <Icon name="sun" size={14} color="#f59e0b" strokeWidth={2}/>
+          <span style={{ fontSize:12, color:'#b45309', fontWeight:500, flex:1 }}>
+            AI 생성에 실패해 샘플 코스를 보여드려요. 재생성해보세요.
+          </span>
+        </div>
+      )}
 
       {/* Day tabs + 지도 버튼 */}
       <div style={{ display:'flex', alignItems:'center', gap:8, padding:'14px 20px 0', flexShrink:0, overflowX:'auto', scrollbarWidth:'none' } as React.CSSProperties}>
@@ -293,7 +335,7 @@ export default function PlanPage() {
               strokeWidth={saved ? 2.5 : 1.8}/>
             {saved ? '저장됨' : '저장'}
           </button>
-          <button className="btn btn-secondary" style={{ flex:1 }} onClick={handleRegen}>
+          <button className="btn btn-secondary" style={{ flex:1 }} onClick={() => setShowRegenSheet(true)}>
             <Icon name="refresh" size={16} color="var(--text)" strokeWidth={1.8}/>
             재생성
           </button>
@@ -304,6 +346,101 @@ export default function PlanPage() {
         </div>
         <div style={{ height: 8 }}/>
       </div>
+
+      {/* 저장 안 하고 나가기 경고 */}
+      {showUnsavedSheet && (
+        <>
+          <div onClick={() => setShowUnsavedSheet(false)} style={{
+            position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:200,
+          }}/>
+          <div style={{
+            position:'fixed', bottom:0, left:0, right:0, zIndex:201,
+            background:'var(--bg)', borderRadius:'24px 24px 0 0',
+            padding:'20px 20px', paddingBottom:'max(24px, env(safe-area-inset-bottom))',
+            boxShadow:'0 -8px 32px rgba(0,0,0,0.12)',
+          }}>
+            <div style={{ width:36, height:4, background:'rgba(180,200,255,0.45)', borderRadius:2, margin:'0 auto 20px' }}/>
+            <div style={{ fontSize:16, fontWeight:700, marginBottom:8, letterSpacing:-0.3 }}>코스를 저장하지 않으셨어요</div>
+            <div style={{ fontSize:13, color:'var(--text3)', marginBottom:24, lineHeight:1.75 }}>
+              나가면 이 코스를 홈에서 다시 볼 수 있지만,<br/>저장해두면 더 안전하게 보관돼요.
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              <button className="btn btn-primary" onClick={() => { toggleSave(); router.push('/') }}>
+                <Icon name="bookmark" size={16} color="#fff" strokeWidth={2}/>
+                저장하고 나가기
+              </button>
+              <button className="btn btn-secondary" onClick={() => router.push('/')}>
+                그냥 나가기
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 재생성 옵션 시트 */}
+      {showRegenSheet && (
+        <>
+          <div onClick={() => setShowRegenSheet(false)} style={{
+            position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:200,
+          }}/>
+          <div style={{
+            position:'fixed', bottom:0, left:0, right:0, zIndex:201,
+            background:'var(--bg)', borderRadius:'24px 24px 0 0',
+            padding:'20px 20px', paddingBottom:'max(28px, env(safe-area-inset-bottom))',
+            boxShadow:'0 -8px 32px rgba(0,0,0,0.12)',
+          }}>
+            <div style={{ width:36, height:4, background:'rgba(180,200,255,0.45)', borderRadius:2, margin:'0 auto 20px' }}/>
+            <div style={{ fontSize:16, fontWeight:700, marginBottom:18, letterSpacing:-0.3 }}>코스 재생성</div>
+
+            <div style={{ fontSize:13, fontWeight:700, color:'var(--text2)', marginBottom:10 }}>여행 테마</div>
+            <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
+              {([
+                { type:'balanced' as Theme, label:'균형잡힌', emoji:'✨' },
+                { type:'food' as Theme, label:'맛집 위주', emoji:'🍽' },
+                { type:'nature' as Theme, label:'자연 · 뷰', emoji:'🌿' },
+                { type:'culture' as Theme, label:'문화 · 역사', emoji:'🏛' },
+              ] as const).map(opt => (
+                <button key={opt.type} onClick={() => setRegenTheme(opt.type)} style={{
+                  padding:'8px 14px', borderRadius:20, cursor:'pointer', fontFamily:'inherit',
+                  fontSize:13, fontWeight:600,
+                  background: regenTheme === opt.type ? 'var(--blue)' : 'rgba(255,255,255,0.7)',
+                  color: regenTheme === opt.type ? '#fff' : 'var(--text2)',
+                  border: regenTheme === opt.type ? 'none' : '1.5px solid rgba(200,215,255,0.5)',
+                  transition:'all 0.15s',
+                }}>
+                  {opt.emoji} {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ fontSize:13, fontWeight:700, color:'var(--text2)', marginBottom:10 }}>여행 기간</div>
+            <div style={{ display:'flex', gap:8, marginBottom:24 }}>
+              {([
+                { type:'day' as TripType, label:'당일치기' },
+                { type:'1n2d' as TripType, label:'1박 2일' },
+                { type:'2n3d' as TripType, label:'2박 3일' },
+              ] as const).map(opt => (
+                <button key={opt.type} onClick={() => setRegenType(opt.type)} style={{
+                  flex:1, padding:'10px 0', borderRadius:16, cursor:'pointer', fontFamily:'inherit',
+                  fontSize:13, fontWeight:600,
+                  background: regenType === opt.type ? 'var(--blue)' : 'rgba(255,255,255,0.7)',
+                  color: regenType === opt.type ? '#fff' : 'var(--text2)',
+                  border: regenType === opt.type ? 'none' : '1.5px solid rgba(200,215,255,0.5)',
+                  transition:'all 0.15s',
+                }}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <button className="btn btn-primary" style={{ width:'100%' }}
+              onClick={() => handleRegen(regenTheme, regenType)}>
+              <Icon name="sparkle" size={18} color="#fff" strokeWidth={1.5}/>
+              새로운 코스 만들기
+            </button>
+          </div>
+        </>
+      )}
 
       <Loading visible={loading} title={loadTitle} subtitle={loadSub}/>
       <BottomNav activeOverride={2}/>

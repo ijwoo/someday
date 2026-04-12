@@ -55,8 +55,8 @@ export default function HomePage() {
       setSavedCourses(saved)
     } catch {}
     try {
-      const c = sessionStorage.getItem('someday-course')
-      const r = sessionStorage.getItem('someday-region')
+      const c = localStorage.getItem('someday-course')
+      const r = localStorage.getItem('someday-region')
       if (c) {
         const parsed = JSON.parse(c)
         const region = r ? JSON.parse(r) : { ti: 0 }
@@ -72,8 +72,10 @@ export default function HomePage() {
 
   function openSaved(item: SavedItem) {
     try {
-      sessionStorage.setItem('someday-course', JSON.stringify(item.course))
-      sessionStorage.setItem('someday-region', JSON.stringify(item.region))
+      localStorage.setItem('someday-course', JSON.stringify(item.course))
+      localStorage.setItem('someday-region', JSON.stringify(item.region))
+      localStorage.removeItem('someday-is-demo')
+      localStorage.removeItem('someday-regen')
     } catch {}
     router.push('/plan')
   }

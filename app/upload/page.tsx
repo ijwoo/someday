@@ -160,16 +160,19 @@ export default function UploadPage() {
       setLoadSub(`AI가 ${tripLabel} 코스를 짜고 있어요`)
 
       const course = await createCourse(locationName, r.lat, r.lng, places, selectedType, theme, startTime)
-      sessionStorage.setItem('someday-course', JSON.stringify(course))
-      sessionStorage.setItem('someday-regen', JSON.stringify({
+      localStorage.setItem('someday-course', JSON.stringify(course))
+      localStorage.setItem('someday-regen', JSON.stringify({
         lat: r.lat, lng: r.lng, locationName,
         regionName: r.name, regionTi: r.ti,
         tripType: selectedType, theme, startTime,
       }))
+      localStorage.removeItem('someday-is-demo')
     } catch {
-      sessionStorage.setItem('someday-course', JSON.stringify(DEMO_COURSE))
+      localStorage.setItem('someday-course', JSON.stringify(DEMO_COURSE))
+      localStorage.setItem('someday-is-demo', '1')
+      showToast('코스 생성에 실패해 샘플 코스를 보여드려요')
     }
-    sessionStorage.setItem('someday-region', JSON.stringify({ name: r.name, ti: r.ti }))
+    localStorage.setItem('someday-region', JSON.stringify({ name: r.name, ti: r.ti }))
     setLoading(false)
     router.push('/plan')
   }

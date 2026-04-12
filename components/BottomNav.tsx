@@ -7,7 +7,7 @@ const ITEMS: { icon: IconName; label: string; path: string }[] = [
   { icon: 'home',   label: '홈',    path: '/' },
   { icon: 'camera', label: '업로드', path: '/upload' },
   { icon: 'map',    label: '지도',   path: '/plan' },
-  { icon: 'person', label: '프로필', path: '/' },
+  { icon: 'person', label: '프로필', path: '/profile' },
 ]
 
 export default function BottomNav({ activeOverride }: { activeOverride?: number }) {
