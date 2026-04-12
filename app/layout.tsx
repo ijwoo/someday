@@ -19,7 +19,7 @@ const notoSansKr = Noto_Sans_KR({
 
 export const metadata: Metadata = {
   title: 'Someday',
-  description: '언젠가 가야지 했던 곳들, 이제 가보자',
+  description: '언젠가 가야지 했던 곳들, 이제 가봐요',
   other: {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
