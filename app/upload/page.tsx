@@ -1,0 +1,503 @@
+'use client'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import PlaceImage from '@/components/PlaceImage'
+import Loading from '@/components/Loading'
+import Toast, { showToast } from '@/components/Toast'
+import Icon from '@/components/Icon'
+import BottomNav from '@/components/BottomNav'
+import { extractGPS } from '@/lib/exif'
+import { analyzePhoto, fetchPlaces, createCourse } from '@/lib/api'
+import { DEMO_COURSE } from '@/lib/demo'
+import type { TripType, Theme } from '@/types'
+
+const MAX_PHOTOS = 6
+
+const POPULAR_REGIONS = [
+  { name: '서울', sub: '홍대 · 성수 · 경복궁 · 익선동', ti: 0, lat: 37.5665, lng: 126.9780 },
+  { name: '제주', sub: '협재 · 성산일출봉 · 한라산',    ti: 1, lat: 33.4996, lng: 126.5312 },
+  { name: '부산', sub: '해운대 · 감천 · 남포동',         ti: 2, lat: 35.1796, lng: 129.0756 },
+  { name: '교토', sub: '후시미이나리 · 아라시야마',       ti: 3, lat: 34.9671, lng: 135.7727 },
+]
+
+const TRIP_OPTIONS: { type: TripType; label: string; sub: string; icon: 'sun' | 'moon' | 'star' }[] = [
+  { type: 'day',  label: '당일치기', sub: '4~6곳 · 하루 일정',      icon: 'sun'  },
+  { type: '1n2d', label: '1박 2일',  sub: '6~8곳 · 알찬 1박',       icon: 'moon' },
+  { type: '2n3d', label: '2박 3일',  sub: '10~13곳 · 여유로운 여행', icon: 'star' },
+]
+
+const THEME_OPTIONS: { type: Theme; label: string; emoji: string }[] = [
+  { type: 'balanced', label: '균형잡힌', emoji: '✨' },
+  { type: 'food',     label: '맛집 위주', emoji: '🍽' },
+  { type: 'nature',   label: '자연 · 뷰', emoji: '🌿' },
+  { type: 'culture',  label: '문화 · 역사', emoji: '🏛' },
+]
+
+const START_TIMES = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00']
+
+type Region = {
+  name: string; lat: number; lng: number; ti: number
+  sub?: string; photoCount?: number
+}
+type Step = 'idle' | 'analyzed' | 'duration'
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+export default function UploadPage() {
+  const router = useRouter()
+  const [step, setStep] = useState<Step>('idle')
+  const [isManual, setIsManual] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [loadTitle, setLoadTitle] = useState('분석하는 중')
+  const [loadSub, setLoadSub] = useState('잠시만 기다려주세요')
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [detectedRegions, setDetectedRegions] = useState<Region[]>([])
+  const [pendingRegion, setPendingRegion] = useState<Region | null>(null)
+  // duration step options
+  const [selectedType, setSelectedType] = useState<TripType>('day')
+  const [theme, setTheme] = useState<Theme>('balanced')
+  const [startTime, setStartTime] = useState('09:00')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleAnalyze() {
+    setLoading(true)
+    setLoadTitle('사진 분석 중')
+    setLoadSub(`${uploadedFiles.length}장을 처리하고 있어요`)
+
+    try {
+      const gpsPoints: { lat: number; lng: number }[] = []
+      for (const file of uploadedFiles) {
+        const gps = await extractGPS(file)
+        if (gps) gpsPoints.push(gps)
+      }
+
+      if (gpsPoints.length >= 2) {
+        let maxDist = 0
+        for (let i = 0; i < gpsPoints.length; i++) {
+          for (let j = i + 1; j < gpsPoints.length; j++) {
+            maxDist = Math.max(maxDist, haversineKm(
+              gpsPoints[i].lat, gpsPoints[i].lng,
+              gpsPoints[j].lat, gpsPoints[j].lng,
+            ))
+          }
+        }
+        if (maxDist > 150) {
+          showToast('사진들이 서로 다른 지역에서 찍혔어요. 지역을 직접 선택해주세요')
+          setIsManual(true)
+          setDetectedRegions(POPULAR_REGIONS)
+          setLoading(false)
+          setStep('analyzed')
+          return
+        }
+      }
+
+      let foundLat: number | null = null
+      let foundLng: number | null = null
+
+      if (gpsPoints.length > 0) {
+        foundLat = gpsPoints.reduce((s, p) => s + p.lat, 0) / gpsPoints.length
+        foundLng = gpsPoints.reduce((s, p) => s + p.lng, 0) / gpsPoints.length
+        setLoadTitle('GPS 위치 확인')
+        setLoadSub(`${gpsPoints.length}장에서 위치를 감지했어요`)
+      } else {
+        setLoadTitle('AI 이미지 인식 중')
+        setLoadSub('GPS 정보가 없어 이미지를 분석해요')
+        try {
+          const result = await analyzePhoto(uploadedFiles[0])
+          if (result.lat && result.lng) { foundLat = result.lat; foundLng = result.lng }
+        } catch { /* Vision 실패 → 수동 선택 */ }
+      }
+
+      if (foundLat !== null && foundLng !== null) {
+        setLoadTitle('주변 장소 검색 중')
+        setLoadSub('카카오맵에서 명소를 찾아요')
+        const { locationName } = await fetchPlaces(foundLat, foundLng, 'day')
+        setDetectedRegions([{
+          name: locationName || '감지된 위치',
+          lat: foundLat, lng: foundLng, ti: 0,
+          photoCount: uploadedFiles.length,
+        }])
+        setIsManual(false)
+        setStep('analyzed')
+      } else {
+        showToast('위치를 인식하지 못했어요. 지역을 직접 선택해주세요')
+        setIsManual(true)
+        setDetectedRegions(POPULAR_REGIONS)
+        setStep('analyzed')
+      }
+    } catch {
+      showToast('분석 중 오류가 발생했어요')
+      setIsManual(true)
+      setDetectedRegions(POPULAR_REGIONS)
+      setStep('analyzed')
+    }
+
+    setLoading(false)
+  }
+
+  function selectRegion(r: Region) {
+    setPendingRegion(r)
+    setStep('duration')
+  }
+
+  async function buildCourse() {
+    const r = pendingRegion!
+    const tripLabel = TRIP_OPTIONS.find(o => o.type === selectedType)!.label
+    setLoading(true)
+    setLoadTitle('주변 장소 검색 중')
+    setLoadSub(`${r.name} 일대를 탐색하고 있어요`)
+    try {
+      const { locationName: fetched, places } = await fetchPlaces(r.lat, r.lng, selectedType)
+      const locationName = (fetched && fetched !== '알 수 없는 위치') ? fetched : r.name
+
+      setLoadTitle('코스 설계 중')
+      setLoadSub(`AI가 ${tripLabel} 코스를 짜고 있어요`)
+
+      const course = await createCourse(locationName, r.lat, r.lng, places, selectedType, theme, startTime)
+      sessionStorage.setItem('someday-course', JSON.stringify(course))
+      sessionStorage.setItem('someday-regen', JSON.stringify({
+        lat: r.lat, lng: r.lng, locationName,
+        regionName: r.name, regionTi: r.ti,
+        tripType: selectedType, theme, startTime,
+      }))
+    } catch {
+      sessionStorage.setItem('someday-course', JSON.stringify(DEMO_COURSE))
+    }
+    sessionStorage.setItem('someday-region', JSON.stringify({ name: r.name, ti: r.ti }))
+    setLoading(false)
+    router.push('/plan')
+  }
+
+  function handleFiles(files: FileList) {
+    if (!files.length) return
+    const incoming = Array.from(files)
+    const combined = [...uploadedFiles, ...incoming].slice(0, MAX_PHOTOS)
+    if (uploadedFiles.length + incoming.length > MAX_PHOTOS)
+      showToast(`사진은 최대 ${MAX_PHOTOS}장까지 추가할 수 있어요`)
+    setUploadedFiles(combined)
+    setStep('idle')
+    setDetectedRegions([])
+    setPendingRegion(null)
+  }
+
+  const headerTitle =
+    step === 'duration' ? '여행 옵션 설정'
+    : step === 'analyzed' && isManual ? '지역 선택'
+    : '사진 분석'
+
+  function goBack() {
+    if (step === 'duration') { setStep('analyzed'); return }
+    if (step === 'analyzed') { setStep('idle'); setDetectedRegions([]); return }
+    router.push('/')
+  }
+
+  return (
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', position: 'relative' }}>
+
+      {/* Header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '16px 20px 12px',
+        paddingTop: 'max(16px, env(safe-area-inset-top))',
+        flexShrink: 0,
+      }}>
+        <button className="icon-btn icon-btn-ghost" onClick={goBack}>
+          <Icon name="chevron-left" size={20} color="var(--text)" strokeWidth={2}/>
+        </button>
+        <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: -0.3, color: 'var(--text)' }}>
+          {headerTitle}
+        </span>
+        <input ref={fileInputRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
+          onChange={e => e.target.files && handleFiles(e.target.files)}/>
+        {step === 'idle' && uploadedFiles.length > 0 && uploadedFiles.length < MAX_PHOTOS && (
+          <button onClick={() => fileInputRef.current?.click()}
+            className="btn btn-ghost"
+            style={{ marginLeft: 'auto', height: 34, padding: '0 14px', fontSize: 13 }}>
+            <Icon name="plus" size={14} color="var(--blue)" strokeWidth={2.2}/>
+            사진 추가
+          </button>
+        )}
+      </div>
+
+      <div className="scr">
+
+        {/* ── IDLE: 사진 없음 ── */}
+        {step === 'idle' && uploadedFiles.length === 0 && (
+          <div style={{ padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+            <div style={{
+              width: 96, height: 96, borderRadius: 28,
+              background: 'linear-gradient(135deg, rgba(59,126,248,0.1), rgba(91,148,255,0.06))',
+              border: '1.5px solid rgba(59,126,248,0.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon name="image" size={40} color="var(--blue)" strokeWidth={1.2}/>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, letterSpacing: -0.4 }}>사진을 가져오세요</div>
+              <div style={{ fontSize: 13, color: 'var(--text3)', lineHeight: 1.8 }}>
+                GPS가 있는 사진은 자동으로 장소를 인식해요<br/>
+                GPS가 없으면 AI가 이미지를 분석해드려요<br/>
+                <span style={{ color: 'var(--blue)', fontWeight: 600 }}>최대 {MAX_PHOTOS}장</span>까지 추가할 수 있어요
+              </div>
+            </div>
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => fileInputRef.current?.click()}>
+              <Icon name="plus" size={18} color="#fff" strokeWidth={2}/>
+              사진 추가하기
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%' }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--blue3)' }}/>
+              <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 600 }}>또는</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--blue3)' }}/>
+            </div>
+            <button className="btn btn-secondary" style={{ width: '100%' }}
+              onClick={() => { setIsManual(true); setDetectedRegions(POPULAR_REGIONS); setStep('analyzed') }}>
+              <Icon name="pin" size={16} color="var(--text)" strokeWidth={1.8}/>
+              지역 직접 선택하기
+            </button>
+          </div>
+        )}
+
+        {/* ── IDLE: 사진 있음 ── */}
+        {step === 'idle' && uploadedFiles.length > 0 && (
+          <div style={{ padding: '0 20px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text3)' }}>
+                {uploadedFiles.length}/{MAX_PHOTOS}장 선택됨
+              </span>
+              <button onClick={() => setUploadedFiles([])}
+                style={{ fontSize: 12, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                초기화
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 4, marginBottom: 20 }}>
+              {uploadedFiles.map((f, i) => (
+                <UploadedCell key={i} file={f} onRemove={() => setUploadedFiles(prev => prev.filter((_, j) => j !== i))}/>
+              ))}
+              {uploadedFiles.length < MAX_PHOTOS && (
+                <button onClick={() => fileInputRef.current?.click()} style={{
+                  aspectRatio: '1', borderRadius: 12,
+                  border: '1.5px dashed rgba(59,126,248,0.3)',
+                  background: 'rgba(59,126,248,0.04)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 4, cursor: 'pointer',
+                }}>
+                  <Icon name="plus" size={20} color="var(--blue)" strokeWidth={2}/>
+                  <span style={{ fontSize: 10, color: 'var(--blue)', fontWeight: 600 }}>추가</span>
+                </button>
+              )}
+            </div>
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={handleAnalyze}>
+              <Icon name="sparkle" size={18} color="#fff" strokeWidth={1.5}/>
+              장소 분석하기
+            </button>
+            <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text3)', marginTop: 10 }}>
+              GPS 정보 또는 AI로 촬영 장소를 인식해요
+            </p>
+          </div>
+        )}
+
+        {/* ── ANALYZED: 지역 선택 ── */}
+        {step === 'analyzed' && (
+          <div style={{ padding: '0 20px 32px', animation: 'slideUp 0.3s ease' }}>
+            {isManual ? (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: -0.3, marginBottom: 4 }}>인기 여행지</div>
+                <div style={{ fontSize: 13, color: 'var(--text3)' }}>지역을 선택하면 AI가 코스를 만들어드려요</div>
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', marginBottom: 16,
+                background: 'linear-gradient(135deg, rgba(59,126,248,0.08), rgba(91,148,255,0.04))',
+                borderRadius: 'var(--r-sm)', border: '1px solid rgba(59,126,248,0.12)',
+              }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: 12, flexShrink: 0,
+                  background: 'linear-gradient(135deg, var(--blue), var(--blue2))',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(59,126,248,0.28)',
+                }}>
+                  <Icon name="sparkle" size={18} color="#fff" strokeWidth={1.5}/>
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: -0.2 }}>분석 완료</div>
+                  <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 1 }}>코스를 만들 지역을 선택하세요</div>
+                </div>
+              </div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {detectedRegions.map((r, i) => (
+                <button key={i} className="glass" onClick={() => selectRegion(r)} style={{
+                  width: '100%', padding: '14px 16px',
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  borderRadius: 'var(--r-sm)', cursor: 'pointer',
+                  border: '1px solid rgba(255,255,255,0.9)',
+                  fontFamily: 'inherit', textAlign: 'left',
+                  animation: `itemIn 0.3s ${i * 0.07}s ease both`,
+                }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
+                    <PlaceImage name={r.name} width={46} height={46}/>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', letterSpacing: -0.3, marginBottom: 2 }}>{r.name}</div>
+                    {r.sub && <div style={{ fontSize: 11, color: 'var(--text3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sub}</div>}
+                    {r.photoCount != null && <div style={{ fontSize: 11, color: 'var(--blue)', fontWeight: 600, marginTop: 2 }}>사진 {r.photoCount}장 감지</div>}
+                  </div>
+                  <Icon name="chevron-right" size={16} color="var(--text3)" strokeWidth={1.8}/>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── DURATION: 여행 옵션 ── */}
+        {step === 'duration' && pendingRegion && (
+          <div style={{ padding: '0 20px 32px', animation: 'slideUp 0.3s ease' }}>
+
+            {/* 선택된 지역 요약 */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', marginBottom: 22,
+              background: 'linear-gradient(135deg, rgba(59,126,248,0.08), rgba(91,148,255,0.04))',
+              borderRadius: 'var(--r-sm)', border: '1px solid rgba(59,126,248,0.12)',
+            }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
+                <PlaceImage name={pendingRegion.name} width={36} height={36}/>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: -0.2 }}>{pendingRegion.name}</div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 1 }}>목적지 선택됨</div>
+              </div>
+            </div>
+
+            {/* 여행 기간 */}
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', marginBottom: 10, letterSpacing: -0.2 }}>여행 기간</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
+              {TRIP_OPTIONS.map((opt, i) => {
+                const isSel = selectedType === opt.type
+                return (
+                  <button key={opt.type} onClick={() => setSelectedType(opt.type)} style={{
+                    width: '100%', padding: '14px 16px',
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    borderRadius: 'var(--r-sm)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                    background: isSel ? 'linear-gradient(135deg, rgba(59,126,248,0.12), rgba(91,148,255,0.06))' : 'rgba(255,255,255,0.7)',
+                    border: isSel ? '2px solid rgba(59,126,248,0.5)' : '1.5px solid rgba(200,215,255,0.5)',
+                    boxShadow: isSel ? '0 2px 12px rgba(59,126,248,0.15)' : 'none',
+                    transition: 'all 0.15s',
+                    animation: `itemIn 0.25s ${i * 0.06}s ease both`,
+                  }}>
+                    <div style={{
+                      width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                      background: isSel
+                        ? (opt.type === 'day' ? 'rgba(245,158,11,0.15)' : opt.type === '1n2d' ? 'rgba(59,126,248,0.15)' : 'rgba(139,92,246,0.15)')
+                        : 'rgba(200,215,255,0.2)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon name={opt.icon} size={20}
+                        color={isSel ? (opt.type === 'day' ? '#f59e0b' : opt.type === '1n2d' ? 'var(--blue)' : '#8b5cf6') : 'var(--text3)'}
+                        strokeWidth={1.6}/>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: isSel ? 'var(--blue)' : 'var(--text)', letterSpacing: -0.3, marginBottom: 2 }}>{opt.label}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text3)' }}>{opt.sub}</div>
+                    </div>
+                    <div style={{
+                      width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                      background: isSel ? 'var(--blue)' : 'transparent',
+                      border: isSel ? 'none' : '1.5px solid rgba(180,200,255,0.5)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {isSel && <Icon name="check" size={11} color="#fff" strokeWidth={2.5}/>}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* 여행 테마 */}
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', marginBottom: 10, letterSpacing: -0.2 }}>여행 테마</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 22, flexWrap: 'wrap' }}>
+              {THEME_OPTIONS.map(opt => {
+                const isSel = theme === opt.type
+                return (
+                  <button key={opt.type} onClick={() => setTheme(opt.type)} style={{
+                    padding: '8px 14px', borderRadius: 20, cursor: 'pointer', fontFamily: 'inherit',
+                    fontSize: 13, fontWeight: 600,
+                    background: isSel ? 'var(--blue)' : 'rgba(255,255,255,0.7)',
+                    color: isSel ? '#fff' : 'var(--text2)',
+                    border: isSel ? 'none' : '1.5px solid rgba(200,215,255,0.5)',
+                    boxShadow: isSel ? '0 2px 10px rgba(59,126,248,0.25)' : 'none',
+                    transition: 'all 0.15s',
+                  }}>
+                    {opt.emoji} {opt.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* 출발 시간 */}
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)', marginBottom: 10, letterSpacing: -0.2 }}>
+              출발 시간 {selectedType !== 'day' && <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text3)' }}>(1일차 기준)</span>}
+            </div>
+            <div style={{ display: 'flex', gap: 7, marginBottom: 28, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 2 } as React.CSSProperties}>
+              {START_TIMES.map(t => {
+                const isSel = startTime === t
+                return (
+                  <button key={t} onClick={() => setStartTime(t)} style={{
+                    flexShrink: 0, padding: '7px 13px', borderRadius: 16, cursor: 'pointer', fontFamily: 'inherit',
+                    fontSize: 13, fontWeight: 600,
+                    background: isSel ? 'var(--blue)' : 'rgba(255,255,255,0.7)',
+                    color: isSel ? '#fff' : 'var(--text2)',
+                    border: isSel ? 'none' : '1.5px solid rgba(200,215,255,0.5)',
+                    boxShadow: isSel ? '0 2px 10px rgba(59,126,248,0.25)' : 'none',
+                    transition: 'all 0.15s',
+                  }}>
+                    {t}
+                  </button>
+                )
+              })}
+            </div>
+
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={buildCourse}>
+              <Icon name="sparkle" size={18} color="#fff" strokeWidth={1.5}/>
+              코스 만들기
+            </button>
+          </div>
+        )}
+      </div>
+
+      <Loading visible={loading} title={loadTitle} subtitle={loadSub}/>
+      <Toast/>
+      <BottomNav activeOverride={1}/>
+    </div>
+  )
+}
+
+function UploadedCell({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const [url, setUrl] = useState<string | null>(null)
+  useEffect(() => {
+    const u = URL.createObjectURL(file)
+    setUrl(u)
+    return () => URL.revokeObjectURL(u)
+  }, [file])
+  if (!url) return <div style={{ aspectRatio: '1', borderRadius: 12, background: 'var(--blue4)' }}/>
+  return (
+    <div style={{ aspectRatio: '1', borderRadius: 12, overflow: 'hidden', position: 'relative' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+      <button onClick={onRemove} style={{
+        position: 'absolute', top: 4, right: 4,
+        width: 20, height: 20, borderRadius: '50%',
+        background: 'rgba(0,0,0,0.55)', border: 'none', cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Icon name="x" size={11} color="#fff" strokeWidth={2.5}/>
+      </button>
+    </div>
+  )
+}

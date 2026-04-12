@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(taskkill /PID 26892 /F)",
+      "Bash(taskkill:*)",
+      "Bash(grep -r allowedDevHosts node_modules/next/dist/ --include=*.md -l)",
+      "Bash(grep -r \"allowedDevHosts\\\\|experimentalDevHosts\\\\|devAllowed\" node_modules/next/dist/server/ --include=*.js -l)",
+      "Bash(grep -r \"403\\\\|Forbidden\\\\|font.*host\\\\|allowedHost\\\\|trustedHost\" node_modules/next/dist/server/ --include=*.js -l)",
+      "Bash(vercel --version)"
+    ]
+  }
+}

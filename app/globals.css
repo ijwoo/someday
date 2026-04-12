@@ -1,26 +1,209 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-noto-kr);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Design Tokens ── */
+:root {
+  --bg: #f2f5ff;
+  --bg2: #ffffff;
+  --blue: #3b7ef8;
+  --blue2: #5b94ff;
+  --blue3: #dce8ff;
+  --blue4: #eef3ff;
+  --blue-dark: #1a4fd6;
+  --text: #0d1b39;
+  --text2: #4a5780;
+  --text3: #8e9ab8;
+  --sh: 0 2px 20px rgba(59, 126, 248, 0.10);
+  --sh-sm: 0 1px 10px rgba(59, 126, 248, 0.07);
+  --sh-lg: 0 8px 40px rgba(59, 126, 248, 0.18);
+  --sh-up: 0 -2px 20px rgba(59, 126, 248, 0.08);
+  --r: 20px;
+  --r-sm: 14px;
+  --r-xs: 10px;
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overscroll-behavior: none;
+}
+
+/* ── Scrollable ── */
+.scr {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* Space for fixed BottomNav (~80px) */
+  padding-bottom: max(80px, calc(80px + env(safe-area-inset-bottom)));
+}
+.scr::-webkit-scrollbar { display: none; }
+
+/* Pages without .scr that still need nav clearance */
+.nav-pad {
+  padding-bottom: max(80px, calc(80px + env(safe-area-inset-bottom)));
+}
+
+/* ── Glass cards ── */
+.glass {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: var(--sh);
+}
+
+.glass-subtle {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+}
+
+.glass-dark {
+  background: rgba(13, 27, 57, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ── Buttons ── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  border-radius: var(--r-sm);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.12s, opacity 0.12s;
+  font-family: inherit;
+  letter-spacing: -0.2px;
+}
+.btn:active { transform: scale(0.96); opacity: 0.88; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue2) 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(59, 126, 248, 0.32);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  color: var(--text);
+  box-shadow: var(--sh-sm);
+}
+
+.btn-ghost {
+  background: var(--blue4);
+  color: var(--blue);
+  border: none;
+}
+
+/* ── Icon button ── */
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: var(--sh-sm);
+  transition: transform 0.12s, opacity 0.12s;
+  flex-shrink: 0;
+}
+.icon-btn:active { transform: scale(0.93); }
+
+.icon-btn-ghost {
+  background: rgba(59, 126, 248, 0.08);
+  border: none;
+  box-shadow: none;
+}
+
+/* ── Chips ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: -0.1px;
+}
+.chip-blue   { background: rgba(59, 126, 248, 0.1); color: var(--blue); }
+.chip-teal   { background: rgba(20, 184, 166, 0.1); color: #0d9488; }
+.chip-rose   { background: rgba(244, 63, 94, 0.1);  color: #e11d48; }
+.chip-amber  { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.chip-white  {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* ── Section header ── */
+.sec-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  margin-bottom: 14px;
+}
+.sec-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
+.sec-more  { font-size: 13px; color: var(--blue); font-weight: 600; cursor: pointer; }
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes splashOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.6) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes pulse {
+  0%, 80%, 100% { transform: scale(0.55); opacity: 0.3; }
+  40%           { transform: scale(1); opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes itemIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
