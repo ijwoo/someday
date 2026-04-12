@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { reverseGeocode, searchNearby } from '@/lib/kakao';
+import { reverseGeocode, formatLocationName, searchNearby } from '@/lib/kakao';
 
 export async function POST(req: NextRequest) {
     try {
@@ -9,9 +9,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: '좌표가 없어요' }, { status: 400 });
         }
 
-        // locationName이 먼저 필요 (광역 검색 쿼리에 지역명 사용)
-        const locationName = await reverseGeocode(lat, lng);
-        const places = await searchNearby(lat, lng, tripType, locationName);
+        // 전체 주소를 먼저 얻어서 — 광역 검색 쿼리에 사용 (extractRegion)
+        const rawAddress = await reverseGeocode(lat, lng);
+        // 표시용은 짧게 포맷 (읍/리 제거)
+        const locationName = formatLocationName(rawAddress);
+        const places = await searchNearby(lat, lng, tripType, rawAddress);
 
         return NextResponse.json({ locationName, places });
 

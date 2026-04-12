@@ -36,24 +36,67 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-// 주소에서 지역명 추출 (도/시 수준)
+// 표시용 짧은 지명 (읍/리 제거)
+// 예) "제주특별자치도 제주시 애월읍 하귀1리" → "제주시 애월읍"
+//     "부산광역시 해운대구 중동"             → "부산 해운대구"
+//     "경상남도 통영시 도남동"               → "통영시"
+export function formatLocationName(address: string): string {
+    const parts = address.split(' ')
+    const p0 = parts[0] || ''
+    const isMetro = /특별시|광역시|특별자치시/.test(p0)
+    const isProv  = /특별자치도|[가-힣]도$/.test(p0)
+
+    // 한국 행정구역 주소가 아니면 원문 반환
+    if (!isMetro && !isProv) return address
+
+    if (isMetro) {
+        // 서울특별시 강남구 → "서울 강남구"
+        const city = p0.replace(/특별자치시|특별시|광역시/, '')
+        return [city, parts[1]].filter(Boolean).join(' ')
+    }
+
+    // 도 레벨: parts[1]=시군, parts[2]=읍면동
+    const si  = parts[1] || ''
+    const eup = parts[2] || ''
+    // 읍/면까지만 표시 (동/리 제외)
+    if (eup.endsWith('읍') || eup.endsWith('면')) return `${si} ${eup}`
+    return si
+}
+
+// 광역 검색용 지역 키워드 (도 레벨 → 짧게)
+// 예) "제주특별자치도 제주시 애월읍" → "제주"
+//     "부산광역시 해운대구"          → "부산 해운대"
 export function extractRegion(address: string): string {
     const parts = address.split(' ')
     if (parts.length === 0) return address
-    let city = parts[0]
-        .replace('특별자치도', '도')
-        .replace('특별자치시', '')
-        .replace('특별시', '')
-        .replace('광역시', '')
-    // 제주도 → 제주
-    if (city === '제주도') city = '제주'
-    if (parts.length >= 2) {
-        const gu = parts[1].replace(/[시군구]$/, '')
-        // 같은 이름이면 (예: 부산 부산) 그냥 city만
-        if (city.startsWith(gu) || gu.startsWith(city)) return city
-        return `${city} ${gu}`
+    const p0 = parts[0]
+    const isMetro = /특별시|광역시|특별자치시/.test(p0)
+    const isProv  = /특별자치도|[가-힣]도$/.test(p0)
+
+    if (isMetro) {
+        const city = p0.replace(/특별자치시|특별시|광역시/, '')
+        const gu = (parts[1] || '').replace(/[구]$/, '')
+        return gu ? `${city} ${gu}` : city
     }
-    return city
+
+    if (isProv) {
+        // 제주특별자치도 → 제주, 전라남도 → 전남 등
+        let prov = p0
+            .replace('특별자치도', '')
+            .replace(/([가-힣]+)[도]$/, (_, m) => {
+                const abbr: Record<string, string> = {
+                    경기: '경기', 강원: '강원', 충청북: '충북', 충청남: '충남',
+                    전라북: '전북', 전라남: '전남', 경상북: '경북', 경상남: '경남',
+                }
+                return abbr[m] ?? m
+            })
+        // 제주 → 제주 (no 도 suffix)
+        if (prov === '제주') return '제주'
+        const si = (parts[1] || '').replace(/[시군]$/, '')
+        return si ? `${prov} ${si}` : prov
+    }
+
+    return parts.slice(0, 2).join(' ')
 }
 
 // 좌표 → 주소 변환
