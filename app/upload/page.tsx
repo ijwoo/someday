@@ -8,7 +8,6 @@ import Icon from '@/components/Icon'
 import BottomNav from '@/components/BottomNav'
 import { extractGPS } from '@/lib/exif'
 import { analyzePhoto, fetchPlaces, createCourse } from '@/lib/api'
-import { DEMO_COURSE } from '@/lib/demo'
 import type { TripType, Theme } from '@/types'
 
 const MAX_PHOTOS = 6
@@ -183,11 +182,10 @@ export default function UploadPage() {
         regionName: r.name, regionTi: r.ti,
         tripType: selectedType, theme, startTime,
       }))
-      localStorage.removeItem('someday-is-demo')
     } catch {
-      localStorage.setItem('someday-course', JSON.stringify(DEMO_COURSE))
-      localStorage.setItem('someday-is-demo', '1')
-      showToast('코스 생성에 실패해 샘플 코스를 보여드려요')
+      setLoading(false)
+      showToast('코스 생성에 실패했어요. 다시 시도해주세요')
+      return
     }
     localStorage.setItem('someday-region', JSON.stringify({ name: r.name, ti: r.ti }))
     setLoading(false)

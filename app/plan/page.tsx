@@ -8,7 +8,6 @@ import Toast, { showToast } from '@/components/Toast'
 import Icon from '@/components/Icon'
 import BottomNav from '@/components/BottomNav'
 import { fetchPlaces, createCourse } from '@/lib/api'
-import { DEMO_COURSE } from '@/lib/demo'
 import type { TripType, Theme, Course, CourseStep, RegenInfo } from '@/types'
 
 const TAG = { food:'맛집', view:'뷰맛집', cafe:'카페', culture:'문화' }
@@ -35,7 +34,7 @@ export default function PlanPage() {
   const router = useRouter()
   const [view, setView] = useState<View>('plan')
   const [dayIdx, setDayIdx] = useState(0)
-  const [course, setCourse] = useState<Course>(DEMO_COURSE as Course)
+  const [course, setCourse] = useState<Course | null>(null)
   const [region, setRegion] = useState({ name:'서울', ti:0 })
   const [tripType, setTripType] = useState<TripType>('day')
   const [saved, setSaved] = useState(false)
@@ -43,7 +42,6 @@ export default function PlanPage() {
   const [loading, setLoading] = useState(false)
   const [loadTitle, setLoadTitle] = useState('')
   const [loadSub, setLoadSub] = useState('')
-  const [isDemo, setIsDemo] = useState(false)
   const [showUnsavedSheet, setShowUnsavedSheet] = useState(false)
   const [showRegenSheet, setShowRegenSheet] = useState(false)
   const [regenTheme, setRegenTheme] = useState<Theme>('balanced')
@@ -55,7 +53,8 @@ export default function PlanPage() {
       const c = localStorage.getItem('someday-course')
       const r = localStorage.getItem('someday-region')
       const rg = localStorage.getItem('someday-regen')
-      if (c) setCourse(JSON.parse(c))
+      if (!c) { router.replace('/upload'); return }
+      setCourse(JSON.parse(c))
       if (r) setRegion(JSON.parse(r))
       if (rg) {
         const info = JSON.parse(rg) as RegenInfo
@@ -63,8 +62,9 @@ export default function PlanPage() {
         setRegenTheme(info.theme)
         setRegenType(info.tripType)
       }
-      if (localStorage.getItem('someday-is-demo')) setIsDemo(true)
-    } catch {}
+    } catch {
+      router.replace('/upload')
+    }
   }, [])
 
   // localStorage: saved state
@@ -145,8 +145,6 @@ export default function PlanPage() {
       setVisited(new Set())
       localStorage.setItem('someday-course', JSON.stringify(newCourse))
       localStorage.setItem('someday-regen', JSON.stringify({ ...regen, theme: effectiveTheme, tripType: effectiveType }))
-      localStorage.removeItem('someday-is-demo')
-      setIsDemo(false)
       setRegenTheme(effectiveTheme)
       setRegenType(effectiveType)
       setDayIdx(0)
@@ -156,6 +154,8 @@ export default function PlanPage() {
     }
     setLoading(false)
   }
+
+  if (!course) return null
 
   const days = [...new Set(course.steps.map(s => s.day ?? 1))].sort()
   const isMultiDay = days.length > 1
@@ -180,7 +180,7 @@ export default function PlanPage() {
           display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'20px 22px',
         }}>
           <button className="icon-btn" onClick={() => {
-            if (!saved && !isDemo) setShowUnsavedSheet(true)
+            if (!saved) setShowUnsavedSheet(true)
             else router.push('/')
           }} style={{
             position:'absolute', left:16,
@@ -235,20 +235,6 @@ export default function PlanPage() {
         </div>
       </div>
 
-      {/* 데모 코스 안내 배너 */}
-      {isDemo && (
-        <div style={{
-          display:'flex', alignItems:'center', gap:10,
-          padding:'10px 20px', flexShrink:0,
-          background:'rgba(245,158,11,0.08)',
-          borderBottom:'1px solid rgba(245,158,11,0.15)',
-        }}>
-          <Icon name="sun" size={14} color="#f59e0b" strokeWidth={2}/>
-          <span style={{ fontSize:12, color:'#b45309', fontWeight:500, flex:1 }}>
-            AI 생성에 실패해 샘플 코스를 보여드려요. 재생성해보세요.
-          </span>
-        </div>
-      )}
 
       {/* Day tabs + 지도 버튼 */}
       <div style={{ display:'flex', alignItems:'center', gap:8, padding:'14px 20px 0', flexShrink:0, overflowX:'auto', scrollbarWidth:'none' } as React.CSSProperties}>

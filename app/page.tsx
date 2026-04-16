@@ -74,7 +74,6 @@ export default function HomePage() {
     try {
       localStorage.setItem('someday-course', JSON.stringify(item.course))
       localStorage.setItem('someday-region', JSON.stringify(item.region))
-      localStorage.removeItem('someday-is-demo')
       localStorage.removeItem('someday-regen')
     } catch {}
     router.push('/plan')
