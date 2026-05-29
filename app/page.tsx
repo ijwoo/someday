@@ -15,19 +15,19 @@ const OB_SLIDES: {
   {
     seed: 5, ti: 0,
     icon: 'camera', iconLabel: 'GPS · AI 위치 인식',
-    title: (<>사진 속 <em style={{ color: '#93c5fd', fontStyle: 'italic' }}>장소</em>를<br/>AI가 찾아드려요</>),
+    title: (<>사진 속 <em style={{ color: 'var(--blue)', fontStyle: 'normal' }}>장소</em>를<br/>AI가 찾아드려요</>),
     desc: 'GPS 또는 AI 이미지 인식으로\n어디서 찍었는지 자동 파악해요',
   },
   {
     seed: 42, ti: 1,
     icon: 'route', iconLabel: '최적 동선 자동 생성',
-    title: (<>가고 싶던 곳들이<br/><em style={{ color: '#6ee7b7', fontStyle: 'italic' }}>여행 코스</em>로</>),
+    title: (<>가고 싶던 곳들이<br/><em style={{ color: '#15a86b', fontStyle: 'normal' }}>여행 코스</em>로</>),
     desc: '당일치기부터 2박 3일까지\nAI가 최적의 여행 동선을 짜드려요',
   },
   {
     seed: 78, ti: 3,
     icon: 'share', iconLabel: '링크 하나로 공유',
-    title: (<>친구와 <em style={{ color: '#c4b5fd', fontStyle: 'italic' }}>공유</em>하고<br/>같이 떠나요</>),
+    title: (<>친구와 <em style={{ color: '#8b5cf6', fontStyle: 'normal' }}>공유</em>하고<br/>같이 떠나요</>),
     desc: '완성된 코스를 링크로 공유하면\n앱 없이도 바로 확인할 수 있어요',
   },
 ]
@@ -89,32 +89,30 @@ export default function HomePage() {
   const SplashOverlay = (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 999,
-      background: 'linear-gradient(160deg, #1a4fd6 0%, #3b7ef8 60%, #60a5fa 100%)',
+      background: 'var(--blue)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       animation: 'splashOut 0.4s 1.5s ease forwards', pointerEvents: 'none',
     }}>
       <div style={{
-        width: 88, height: 88, borderRadius: 26,
-        background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.35)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22,
+        width: 80, height: 80, borderRadius: 22,
+        background: 'rgba(255,255,255,0.16)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20,
         animation: 'popIn 0.7s cubic-bezier(.34,1.56,.64,1) both',
-        boxShadow: '0 12px 40px rgba(0,0,60,0.22)',
       }}>
-        <Icon name="map" size={40} color="#fff" strokeWidth={1.4}/>
+        <Icon name="map" size={36} color="#fff" strokeWidth={1.8}/>
       </div>
       <div style={{
-        fontFamily: 'var(--font-dm-serif), serif',
-        fontSize: 44, color: '#fff', letterSpacing: -1.5,
+        fontSize: 34, fontWeight: 800, color: '#fff', letterSpacing: -1,
         animation: 'slideUp 0.6s 0.18s ease both',
       }}>Someday</div>
       <p style={{
-        fontSize: 14, color: 'rgba(255,255,255,0.68)', marginTop: 10,
+        fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 10,
         textAlign: 'center', lineHeight: 1.7, animation: 'slideUp 0.6s 0.3s ease both',
       }}>언젠가 가야지 했던 곳들<br/>이제 진짜 가봐요</p>
-      <div style={{ display: 'flex', gap: 8, marginTop: 52, animation: 'slideUp 0.5s 0.44s ease both' }}>
+      <div style={{ display: 'flex', gap: 7, marginTop: 48, animation: 'slideUp 0.5s 0.44s ease both' }}>
         {[0,1,2].map(i => (
           <div key={i} style={{
-            width: 7, height: 7, borderRadius: '50%', background: 'rgba(255,255,255,0.45)',
+            width: 7, height: 7, borderRadius: '50%', background: 'rgba(255,255,255,0.5)',
             animation: `pulse 1.5s ${i*0.22}s ease-in-out infinite`,
           }}/>
         ))}
@@ -161,9 +159,8 @@ export default function HomePage() {
           </div>
 
           <h2 style={{
-            fontFamily: 'var(--font-dm-serif), serif',
-            fontSize: 28, lineHeight: 1.2, textAlign: 'center',
-            marginBottom: 14, color: 'var(--text)', letterSpacing: -0.5,
+            fontSize: 26, fontWeight: 800, lineHeight: 1.3, textAlign: 'center',
+            marginBottom: 14, color: 'var(--text)', letterSpacing: -0.7,
           }}>{slide.title}</h2>
           <p style={{ fontSize: 14, color: 'var(--text2)', textAlign: 'center', lineHeight: 1.85 }}>
             {slide.desc.split('\n').map((l, i, arr) => (
@@ -206,39 +203,31 @@ export default function HomePage() {
       {SplashOverlay}
       <div className="scr">
 
-        <div style={{ padding: '60px 22px 28px' }}>
-          <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3)', marginBottom: 8, letterSpacing: 0.4, textTransform: 'uppercase' }}>Someday</p>
-          <h1 style={{ fontFamily: 'var(--font-dm-serif), serif', fontSize: 29, lineHeight: 1.15, letterSpacing: -0.8, color: 'var(--text)' }}>
+        <div style={{ padding: '56px 20px 28px' }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', marginBottom: 8, letterSpacing: 0.4 }}>SOMEDAY</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.3, letterSpacing: -0.8, color: 'var(--text)' }}>
             언젠가 가야지<br/>했던 곳들,{' '}
-            <span style={{
-              background: 'linear-gradient(135deg, var(--blue), var(--blue2))',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-            }}>이제 가봐요</span>
+            <span style={{ color: 'var(--blue)' }}>이제 가봐요</span>
           </h1>
         </div>
 
         {/* Upload CTA */}
-        <div style={{ padding: '0 20px', marginBottom: 36 }}>
+        <div style={{ padding: '0 20px', marginBottom: 32 }}>
           <button onClick={() => router.push('/upload')} style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: 16, padding: '18px 20px', borderRadius: 22,
-            background: 'linear-gradient(135deg, var(--blue) 0%, var(--blue2) 100%)',
-            border: 'none', cursor: 'pointer', position: 'relative', overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(59,126,248,0.32)', fontFamily: 'inherit', transition: 'transform 0.14s',
+            width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', borderRadius: 'var(--r)',
+            background: 'var(--blue)', border: 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.1s',
           }}
-            onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.975)')}
+            onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.985)')}
             onTouchEnd={e => (e.currentTarget.style.transform = '')}
           >
-            <div style={{ position: 'absolute', top: -30, right: -20, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', pointerEvents: 'none' }}/>
-            <div style={{ width: 50, height: 50, borderRadius: 16, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Icon name="camera" size={24} color="#fff" strokeWidth={1.5}/>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Icon name="camera" size={22} color="#fff" strokeWidth={2}/>
             </div>
             <div style={{ flex: 1, textAlign: 'left' }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 3, letterSpacing: -0.3 }}>사진 가져오기</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.72)' }}>GPS · AI 인식 · 코스 자동 생성</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 2, letterSpacing: -0.3 }}>사진 가져오기</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.78)' }}>GPS · AI 인식 · 코스 자동 생성</div>
             </div>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon name="chevron-right" size={18} color="#fff" strokeWidth={2}/>
-            </div>
+            <Icon name="chevron-right" size={20} color="rgba(255,255,255,0.85)" strokeWidth={2}/>
           </button>
         </div>
 
@@ -281,30 +270,28 @@ export default function HomePage() {
         <div style={{ padding: '0 20px' }}>
           {recentCourse ? (
             <button className="glass" onClick={() => router.push('/plan')} style={{
-              width: '100%', borderRadius: 18, padding: '14px 16px',
+              width: '100%', borderRadius: 'var(--r)', padding: '14px',
               display: 'flex', alignItems: 'center', gap: 14,
-              cursor: 'pointer', border: '2px solid rgba(59,126,248,0.2)',
-              fontFamily: 'inherit', textAlign: 'left', transition: 'transform 0.14s',
-              background: 'linear-gradient(135deg, rgba(59,126,248,0.06), var(--surface))',
+              cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', transition: 'transform 0.1s',
             }}
-              onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.98)')}
+              onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.985)')}
               onTouchEnd={e => (e.currentTarget.style.transform = '')}
             >
-              <div style={{ width: 52, height: 52, borderRadius: 14, overflow: 'hidden', flexShrink: 0 }}>
+              <div style={{ width: 52, height: 52, borderRadius: 12, overflow: 'hidden', flexShrink: 0 }}>
                 <RecentCanvas ti={recentCourse.ti}/>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--blue)', background: 'rgba(59,126,248,0.1)', padding: '2px 7px', borderRadius: 6 }}>최근</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--blue)', background: 'var(--blue4)', padding: '2px 7px', borderRadius: 'var(--r-xs)' }}>최근</span>
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4, letterSpacing: -0.2, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {recentCourse.title}
                 </div>
                 <span className="chip chip-blue">
-                  <Icon name="pin" size={10} color="var(--blue)" strokeWidth={2}/> {recentCourse.steps}개 스팟
+                  <Icon name="pin" size={11} color="var(--blue)" strokeWidth={2}/> {recentCourse.steps}개 스팟
                 </span>
               </div>
-              <Icon name="chevron-right" size={16} color="var(--blue)" strokeWidth={1.8}/>
+              <Icon name="chevron-right" size={18} color="var(--text3)" strokeWidth={1.8}/>
             </button>
           ) : (
             <div style={{
