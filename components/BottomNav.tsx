@@ -26,16 +26,14 @@ export default function BottomNav({ activeOverride }: { activeOverride?: number 
       position: 'fixed',
       bottom: 0, left: 0, right: 0,
       zIndex: 100,
-      padding: '8px 16px',
-      paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
-      pointerEvents: 'none',
+      background: 'var(--bg)',
+      borderTop: '1px solid var(--border-hair)',
+      paddingBottom: 'env(safe-area-inset-bottom)',
     }}>
-      <div
-        className="glass"
-        style={{ display: 'flex', padding: '6px 8px', borderRadius: 24, pointerEvents: 'all' }}
-      >
+      <div style={{ display: 'flex', padding: '8px 8px 6px' }}>
         {ITEMS.map((item, i) => {
           const isActive = i === active
+          const color = isActive ? 'var(--blue)' : 'var(--text3)'
           return (
             <button
               key={i}
@@ -47,25 +45,24 @@ export default function BottomNav({ activeOverride }: { activeOverride?: number 
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 4,
-                padding: '8px 0',
+                padding: '6px 0',
                 cursor: 'pointer',
-                borderRadius: 16,
                 border: 'none',
-                background: isActive ? 'rgba(59,126,248,0.1)' : 'transparent',
-                transition: 'background 0.18s',
+                background: 'transparent',
                 fontFamily: 'inherit',
               }}
             >
               <Icon
                 name={item.icon}
-                size={22}
-                color={isActive ? 'var(--blue)' : 'var(--text3)'}
-                strokeWidth={isActive ? 2 : 1.5}
+                size={23}
+                color={color}
+                strokeWidth={isActive ? 2.2 : 1.8}
               />
               <span style={{
-                fontSize: 10,
-                fontWeight: 600,
-                color: isActive ? 'var(--blue)' : 'var(--text3)',
+                fontSize: 11,
+                fontWeight: isActive ? 700 : 500,
+                color,
+                letterSpacing: -0.2,
                 transition: 'color 0.18s',
               }}>
                 {item.label}

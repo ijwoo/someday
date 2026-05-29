@@ -4,111 +4,119 @@
   --font-sans: var(--font-noto-kr);
 }
 
-/* ── Design Tokens ── */
+/* ── Design Tokens (Toss-tone: 흰 배경 · 중립 그레이 · 절제된 블루) ── */
 :root {
   color-scheme: light;
-  --bg: #f2f5ff;
-  --bg2: #ffffff;
-  --blue: #3b7ef8;
-  --blue2: #5b94ff;
-  --blue3: #dce8ff;
-  --blue4: #eef3ff;
-  --blue-dark: #1a4fd6;
-  --text: #0d1b39;
-  --text2: #4a5780;
-  --text3: #8e9ab8;
-  --sh: 0 2px 20px rgba(59, 126, 248, 0.10);
-  --sh-sm: 0 1px 10px rgba(59, 126, 248, 0.07);
-  --sh-lg: 0 8px 40px rgba(59, 126, 248, 0.18);
-  --sh-up: 0 -2px 20px rgba(59, 126, 248, 0.08);
-  --r: 20px;
-  --r-sm: 14px;
-  --r-xs: 10px;
+  --bg: #ffffff;
+  --bg2: #f9fafb;
+  --blue: #3182f6;
+  --blue2: #4593fc;
+  --blue3: #c9deff;
+  --blue4: #eaf2ff;
+  --blue-dark: #1b64da;
+  --text: #191f28;
+  --text2: #4e5968;
+  --text3: #8b95a1;
 
-  /* Semantic surfaces (theme-aware) */
-  --surface: rgba(255, 255, 255, 0.7);
-  --surface-soft: rgba(255, 255, 255, 0.55);
-  --sheet: rgba(255, 255, 255, 0.94);
-  --glass-bg: rgba(255, 255, 255, 0.78);
-  --glass-border: rgba(255, 255, 255, 0.9);
-  --glass-subtle-bg: rgba(255, 255, 255, 0.55);
-  --glass-subtle-border: rgba(255, 255, 255, 0.75);
-  --btn-secondary-bg: rgba(255, 255, 255, 0.82);
-  --btn-secondary-border: rgba(255, 255, 255, 0.95);
-  --border-soft: rgba(200, 215, 255, 0.5);
-  --border-hair: rgba(200, 215, 255, 0.25);
-  --dash: rgba(59, 126, 248, 0.18);
-  --overlay-bg: rgba(242, 245, 255, 0.88);
-  --cta-dark: #0d1b39;
-  --skeleton-base: rgba(59, 126, 248, 0.08);
-  --skeleton-hi: rgba(59, 126, 248, 0.16);
+  /* 거의 평면 — 그림자는 최소, 경계는 hairline 라인으로 */
+  --sh: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --sh-lg: 0 6px 24px rgba(0, 0, 0, 0.10);
+  --sh-up: 0 -1px 16px rgba(0, 0, 0, 0.05);
+
+  --r: 16px;
+  --r-sm: 12px;
+  --r-xs: 8px;
+
+  /* Semantic surfaces */
+  --surface: #f2f4f6;        /* 토스 시그니처 그레이 — secondary 버튼/칩/채움 */
+  --surface-soft: #f7f8fa;
+  --sheet: #ffffff;
+  --card: #ffffff;
+  --glass-bg: #ffffff;
+  --glass-border: #e5e8eb;
+  --glass-subtle-bg: #f9fafb;
+  --glass-subtle-border: #eaedf0;
+  --btn-secondary-bg: #f2f4f6;
+  --btn-secondary-border: transparent;
+  --border-soft: #e5e8eb;
+  --border-hair: #f0f2f4;
+  --dash: #d4d9df;
+  --overlay-bg: rgba(255, 255, 255, 0.7);
+  --cta-dark: #191f28;
+  --skeleton-base: #f2f4f6;
+  --skeleton-hi: #e9ecf0;
 }
 
-/* ── Dark theme ──
-   Applied when the OS prefers dark (and the user hasn't forced light),
-   or when the user explicitly selects dark via the in-app toggle. */
+/* ── Dark theme (중립 다크) ── */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #0b1222;
-    --bg2: #131c30;
-    --blue3: #24314f;
-    --blue4: #161f33;
-    --text: #eef2ff;
-    --text2: #b3bedb;
-    --text3: #76829f;
-    --sh: 0 2px 20px rgba(0, 0, 0, 0.45);
-    --sh-sm: 0 1px 10px rgba(0, 0, 0, 0.4);
-    --sh-lg: 0 8px 40px rgba(0, 0, 0, 0.55);
-    --sh-up: 0 -2px 20px rgba(0, 0, 0, 0.4);
-    --surface: rgba(40, 52, 82, 0.72);
-    --surface-soft: rgba(40, 52, 82, 0.45);
-    --sheet: rgba(20, 28, 46, 0.94);
-    --glass-bg: rgba(26, 35, 58, 0.72);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-subtle-bg: rgba(26, 35, 58, 0.5);
-    --glass-subtle-border: rgba(255, 255, 255, 0.06);
-    --btn-secondary-bg: rgba(36, 48, 76, 0.85);
-    --btn-secondary-border: rgba(255, 255, 255, 0.08);
-    --border-soft: rgba(120, 140, 200, 0.22);
-    --border-hair: rgba(120, 140, 200, 0.16);
-    --dash: rgba(91, 148, 255, 0.3);
-    --overlay-bg: rgba(11, 18, 34, 0.9);
-    --cta-dark: #1b2741;
-    --skeleton-base: rgba(120, 140, 200, 0.1);
-    --skeleton-hi: rgba(120, 140, 200, 0.2);
+    --bg: #17171c;
+    --bg2: #1c1d22;
+    --blue: #4593fc;
+    --blue2: #5b9dfd;
+    --blue3: #2b3a55;
+    --blue4: #1b2436;
+    --text: #f2f4f6;
+    --text2: #b0b8c1;
+    --text3: #6b7684;
+    --sh: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --sh-lg: 0 6px 24px rgba(0, 0, 0, 0.5);
+    --sh-up: 0 -1px 16px rgba(0, 0, 0, 0.4);
+    --surface: #26272c;
+    --surface-soft: #202126;
+    --sheet: #1c1d22;
+    --card: #1c1d22;
+    --glass-bg: #1c1d22;
+    --glass-border: #2e2f34;
+    --glass-subtle-bg: #202126;
+    --glass-subtle-border: #292a2f;
+    --btn-secondary-bg: #26272c;
+    --btn-secondary-border: transparent;
+    --border-soft: #2e2f34;
+    --border-hair: #242529;
+    --dash: #3a3b41;
+    --overlay-bg: rgba(23, 23, 28, 0.8);
+    --cta-dark: #2e2f34;
+    --skeleton-base: #26272c;
+    --skeleton-hi: #303138;
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0b1222;
-  --bg2: #131c30;
-  --blue3: #24314f;
-  --blue4: #161f33;
-  --text: #eef2ff;
-  --text2: #b3bedb;
-  --text3: #76829f;
-  --sh: 0 2px 20px rgba(0, 0, 0, 0.45);
-  --sh-sm: 0 1px 10px rgba(0, 0, 0, 0.4);
-  --sh-lg: 0 8px 40px rgba(0, 0, 0, 0.55);
-  --sh-up: 0 -2px 20px rgba(0, 0, 0, 0.4);
-  --surface: rgba(40, 52, 82, 0.72);
-  --surface-soft: rgba(40, 52, 82, 0.45);
-  --sheet: rgba(20, 28, 46, 0.94);
-  --glass-bg: rgba(26, 35, 58, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-subtle-bg: rgba(26, 35, 58, 0.5);
-  --glass-subtle-border: rgba(255, 255, 255, 0.06);
-  --btn-secondary-bg: rgba(36, 48, 76, 0.85);
-  --btn-secondary-border: rgba(255, 255, 255, 0.08);
-  --border-soft: rgba(120, 140, 200, 0.22);
-  --border-hair: rgba(120, 140, 200, 0.16);
-  --dash: rgba(91, 148, 255, 0.3);
-  --overlay-bg: rgba(11, 18, 34, 0.9);
-  --cta-dark: #1b2741;
-  --skeleton-base: rgba(120, 140, 200, 0.1);
-  --skeleton-hi: rgba(120, 140, 200, 0.2);
+  --bg: #17171c;
+  --bg2: #1c1d22;
+  --blue: #4593fc;
+  --blue2: #5b9dfd;
+  --blue3: #2b3a55;
+  --blue4: #1b2436;
+  --text: #f2f4f6;
+  --text2: #b0b8c1;
+  --text3: #6b7684;
+  --sh: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --sh-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --sh-lg: 0 6px 24px rgba(0, 0, 0, 0.5);
+  --sh-up: 0 -1px 16px rgba(0, 0, 0, 0.4);
+  --surface: #26272c;
+  --surface-soft: #202126;
+  --sheet: #1c1d22;
+  --card: #1c1d22;
+  --glass-bg: #1c1d22;
+  --glass-border: #2e2f34;
+  --glass-subtle-bg: #202126;
+  --glass-subtle-border: #292a2f;
+  --btn-secondary-bg: #26272c;
+  --btn-secondary-border: transparent;
+  --border-soft: #2e2f34;
+  --border-hair: #242529;
+  --dash: #3a3b41;
+  --overlay-bg: rgba(23, 23, 28, 0.8);
+  --cta-dark: #2e2f34;
+  --skeleton-base: #26272c;
+  --skeleton-hi: #303138;
 }
 
 /* ── Reset ── */
@@ -136,37 +144,31 @@ body {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  /* Space for fixed BottomNav (~80px) */
   padding-bottom: max(80px, calc(80px + env(safe-area-inset-bottom)));
 }
 .scr::-webkit-scrollbar { display: none; }
 
-/* Pages without .scr that still need nav clearance */
 .nav-pad {
   padding-bottom: max(80px, calc(80px + env(safe-area-inset-bottom)));
 }
 
-/* ── Glass cards ── */
+/* ── Cards (flat) ── */
 .glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--sh);
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  box-shadow: none;
 }
 
 .glass-subtle {
   background: var(--glass-subtle-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-subtle-border);
 }
 
 .glass-dark {
-  background: rgba(13, 27, 57, 0.72);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 /* ── Buttons ── */
@@ -174,38 +176,33 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 52px;
+  gap: 6px;
+  height: 50px;
   border-radius: var(--r-sm);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: transform 0.12s, opacity 0.12s;
+  transition: transform 0.1s ease, background 0.15s ease, opacity 0.15s ease;
   font-family: inherit;
   letter-spacing: -0.2px;
 }
-.btn:active { transform: scale(0.96); opacity: 0.88; }
+.btn:active { transform: scale(0.98); }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--blue) 0%, var(--blue2) 100%);
+  background: var(--blue);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(59, 126, 248, 0.32);
 }
+.btn-primary:active { background: var(--blue-dark); }
 
 .btn-secondary {
   background: var(--btn-secondary-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--btn-secondary-border);
   color: var(--text);
-  box-shadow: var(--sh-sm);
 }
 
 .btn-ghost {
   background: var(--blue4);
   color: var(--blue);
-  border: none;
 }
 
 /* ── Icon button ── */
@@ -218,41 +215,36 @@ body {
   justify-content: center;
   cursor: pointer;
   border: none;
-  background: var(--btn-secondary-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--sh-sm);
-  transition: transform 0.12s, opacity 0.12s;
+  background: var(--surface);
+  transition: transform 0.1s ease, background 0.15s ease;
   flex-shrink: 0;
 }
-.icon-btn:active { transform: scale(0.93); }
+.icon-btn:active { transform: scale(0.94); }
 
 .icon-btn-ghost {
-  background: rgba(59, 126, 248, 0.08);
+  background: transparent;
   border: none;
-  box-shadow: none;
 }
 
-/* ── Chips ── */
+/* ── Chips (작고 절제된 태그) ── */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
-  letter-spacing: -0.1px;
+  padding: 4px 8px;
+  border-radius: var(--r-xs);
+  letter-spacing: -0.2px;
 }
-.chip-blue   { background: rgba(59, 126, 248, 0.1); color: var(--blue); }
-.chip-teal   { background: rgba(20, 184, 166, 0.1); color: #0d9488; }
-.chip-rose   { background: rgba(244, 63, 94, 0.1);  color: #e11d48; }
-.chip-amber  { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.chip-blue   { background: var(--blue4); color: var(--blue); }
+.chip-teal   { background: rgba(20, 184, 166, 0.12); color: #0d9488; }
+.chip-rose   { background: rgba(240, 68, 82, 0.12);  color: #f04452; }
+.chip-amber  { background: rgba(245, 159, 0, 0.14);  color: #e08e0b; }
 .chip-white  {
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 /* ── Section header ── */
@@ -260,11 +252,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 22px;
-  margin-bottom: 14px;
+  padding: 0 20px;
+  margin-bottom: 12px;
 }
-.sec-title { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); }
-.sec-more  { font-size: 13px; color: var(--blue); font-weight: 600; cursor: pointer; }
+.sec-title { font-size: 17px; font-weight: 700; letter-spacing: -0.4px; color: var(--text); }
+.sec-more  { font-size: 13px; color: var(--text3); font-weight: 600; cursor: pointer; }
 
 /* ── Animations ── */
 @keyframes fadeIn {
