@@ -60,16 +60,19 @@ export async function generateCourse(
     tripType: 'day' | '1n2d' | '2n3d' = 'day',
     theme = 'balanced',
     startTime = '09:00',
-    opts: { exclude?: string[]; note?: string } = {},
+    opts: { exclude?: string[]; note?: string; anchor?: string } = {},
 ) {
     const exclude = opts.exclude ?? []
     const note = (opts.note ?? '').trim()
+    // 사진 속 그 장소(주인공). 사용자가 직접 제외했다면 무시한다.
+    const anchor = opts.anchor && !exclude.includes(opts.anchor) ? opts.anchor : ''
 
     const sorted = [...places].sort((a, b) => Number(a.distance) - Number(b.distance))
     // 사용자가 뺀 장소는 후보에서 아예 제거
     const avail = exclude.length ? sorted.filter(p => !exclude.includes(p.name)) : sorted
 
     const extraRules = [
+        anchor ? `- ANCHOR — the heart of this trip: "${anchor}". This is the exact place the traveler's photo came from, and the whole course exists to take them there. You MUST include "${anchor}" as a spot, place it FIRST (on Day 1), and choose every other spot so it complements "${anchor}" — same area, matching mood. Never drop it.` : '',
         exclude.length ? `- The user removed these places — NEVER include them: ${exclude.join(', ')}.` : '',
         note ? `- Extra request from the user, treat it as a priority: "${note}".` : '',
     ].filter(Boolean).join('\n')

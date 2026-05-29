@@ -313,3 +313,39 @@ export async function searchNearby(
     )
     return capped.slice(0, MAX_CANDIDATES)
 }
+
+// 사진 속 "그 장소" = 코스의 주인공(앵커)
+// 사진이 찍힌 좌표에 가장 가까운 '여행할 만한 곳'을 찾는다.
+// (관광명소/문화시설/가볼만한곳 중 좌표에 가장 가까운 것)
+// 없으면 null → 호출부에서 앵커 없이 일반 코스로 폴백.
+export interface AnchorPlace {
+    name: string
+    address: string
+    category: string
+    lat: number
+    lng: number
+    distance: number
+}
+
+export async function findAnchor(lat: number, lng: number): Promise<AnchorPlace | null> {
+    const RADIUS = 1500 // 사진 좌표 근처 — 보통 그 자리의 명소가 곧 촬영지
+    const [landmarks, attractions, culture] = await Promise.all([
+        searchByCategory('AT4', '관광명소', lat, lng, RADIUS, 5),
+        searchByKeyword('가볼만한곳', '관광명소', lat, lng, RADIUS, 5),
+        searchByCategory('CT1', '문화시설', lat, lng, RADIUS, 5),
+    ])
+
+    const pool = [...landmarks, ...attractions, ...culture]
+    if (pool.length === 0) return null
+
+    const seen = new Set<string>()
+    const dedup = pool.filter(p => {
+        if (seen.has(p.name)) return false
+        seen.add(p.name)
+        return true
+    })
+
+    // 좌표에 가장 가까운 여행지가 사진 속 그 장소일 확률이 가장 높다
+    dedup.sort((a, b) => a.distance - b.distance)
+    return dedup[0]
+}

@@ -333,6 +333,7 @@ export default function PlanPage() {
                   idx={i}
                   last={i === filtered.length - 1}
                   visited={visited.has(item.order)}
+                  isAnchor={!!course.anchor && item.name === course.anchor}
                   onToggleVisit={() => toggleVisit(item.order)}
                   onMore={() => setActionSpot(item)}
                   dayColor={DAY_COLORS[item.day ?? 1] ?? 'var(--blue)'}
@@ -554,9 +555,9 @@ export default function PlanPage() {
 }
 
 /* ── Timeline item ── */
-function TLItem({ item, idx, last, visited, onToggleVisit, onMore, dayColor }: {
+function TLItem({ item, idx, last, visited, isAnchor, onToggleVisit, onMore, dayColor }: {
   item: CourseStep; idx: number; last: boolean
-  visited: boolean; onToggleVisit: () => void; onMore: () => void; dayColor: string
+  visited: boolean; isAnchor?: boolean; onToggleVisit: () => void; onMore: () => void; dayColor: string
 }) {
   const badge = (item as any).badge ?? '명소'
   const tags  = (item as any).tags  ?? ['view']
@@ -600,7 +601,11 @@ function TLItem({ item, idx, last, visited, onToggleVisit, onMore, dayColor }: {
       <div style={{ flex:1 }}>
         <div
           className="glass"
-          style={{ borderRadius:18, overflow:'hidden', cursor:'pointer', transition:'transform 0.12s' }}
+          style={{
+            borderRadius:18, overflow:'hidden', cursor:'pointer', transition:'transform 0.12s',
+            border: isAnchor ? '1.5px solid rgba(59,126,248,0.55)' : undefined,
+            boxShadow: isAnchor ? '0 4px 18px rgba(59,126,248,0.18)' : undefined,
+          }}
           onClick={openKakaoMap}
           onTouchStart={e => (e.currentTarget.style.transform='scale(0.98)')}
           onTouchEnd={e => (e.currentTarget.style.transform='')}
@@ -636,6 +641,16 @@ function TLItem({ item, idx, last, visited, onToggleVisit, onMore, dayColor }: {
             </div>
           </div>
           <div style={{ padding:'12px 14px 14px' }}>
+            {isAnchor && (
+              <div style={{
+                display:'inline-flex', alignItems:'center', gap:4, marginBottom:6,
+                background:'linear-gradient(135deg, rgba(59,126,248,0.14), rgba(91,148,255,0.08))',
+                color:'var(--blue)', fontSize:10, fontWeight:700, padding:'3px 9px', borderRadius:8,
+                border:'1px solid rgba(59,126,248,0.2)', letterSpacing:-0.1,
+              }}>
+                📷 사진 속 그곳
+              </div>
+            )}
             <div style={{ fontSize:15, fontWeight:700, marginBottom:4, letterSpacing:-0.3 }}>{item.name}</div>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
               <span style={{ display:'flex', alignItems:'center', gap:3, fontSize:11, color:'var(--text3)' }}>

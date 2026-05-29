@@ -46,6 +46,8 @@ export interface Course {
     totalTime: string;
     days?: DayInfo[];
     steps: CourseStep[];
+    // 사진 속 그 장소 = 코스의 주인공(앵커). 코스가 이 장소를 중심으로 짜였음을 표시.
+    anchor?: string;
 }
 
 export interface CourseRequest {
