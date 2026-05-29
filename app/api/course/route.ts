@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCourse } from '@/lib/claude';
+import { findAnchor } from '@/lib/kakao';
 import { getCached, setCached, coordKey } from '@/lib/cache';
 
 export async function POST(req: NextRequest) {
@@ -26,12 +27,27 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        const course = await generateCourse(locationName, places, tripType, theme, startTime, { exclude, note });
+        // 사진 속 그 장소(주인공)를 찾아 코스의 앵커로 강제 포함
+        // — 사용자가 직접 제외한 장소라면 앵커로 쓰지 않는다.
+        const excl: string[] = Array.isArray(exclude) ? exclude : [];
+        const pool: any[] = Array.isArray(places) ? [...places] : [];
+        let anchorName: string | undefined;
+        try {
+            const anchor = await findAnchor(lat, lng);
+            if (anchor && !excl.includes(anchor.name)) {
+                anchorName = anchor.name;
+                if (!pool.some(p => p.name === anchor.name)) pool.unshift(anchor);
+            }
+        } catch (e) {
+            console.warn('[course] 앵커 탐색 실패 — 앵커 없이 진행', e);
+        }
+
+        const course = await generateCourse(locationName, pool, tripType, theme, startTime, { exclude, note, anchor: anchorName });
 
         // Kakao places 데이터로 각 step에 lat/lng 좌표 보강
-        if (course.steps && Array.isArray(places)) {
+        if (course.steps) {
             const placeMap = new Map<string, { lat: number; lng: number }>();
-            for (const p of places) {
+            for (const p of pool) {
                 if (p.name && p.lat != null && p.lng != null) {
                     placeMap.set(p.name, { lat: p.lat, lng: p.lng });
                 }
@@ -42,6 +58,7 @@ export async function POST(req: NextRequest) {
             });
         }
 
+        if (anchorName) course.anchor = anchorName;
         if (!hasConstraints) setCached(key, course);
         return NextResponse.json(course);
 
