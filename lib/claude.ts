@@ -15,6 +15,9 @@ function extractJSON(text: string): string {
     throw new Error(`No JSON found in response: ${text.slice(0, 100)}`);
 }
 
+// 모든 코스/교체 프롬프트에 공통으로 들어가는 품질 가이드
+const QUALITY_RULE = '- Build a real trip, not a list of nearby shops. Favor iconic, representative, travel-worthy spots (landmarks, scenic spots, signature local eateries, distinctive cafes). Avoid generic chains, cinemas, marts, and everyday errands. If candidates are weak, still pick the most trip-worthy ones and write descriptions that frame them as part of a journey.'
+
 const THEME_INSTRUCTIONS: Record<string, string> = {
     balanced: '- Balance all categories: mix sightseeing, food, cafe, and culture spots evenly.',
     food:     '- FOOD THEME: At least 50% of spots must be restaurants or local food experiences. Prioritize 음식점/맛집.',
@@ -72,7 +75,7 @@ export async function generateCourse(
     ].filter(Boolean).join('\n')
 
     const baseTheme = THEME_INSTRUCTIONS[theme] ?? THEME_INSTRUCTIONS.balanced
-    const themeRule = extraRules ? `${baseTheme}\n${extraRules}` : baseTheme
+    const themeRule = [baseTheme, QUALITY_RULE, extraRules].filter(Boolean).join('\n')
 
     let systemPrompt: string
     let userContent: string
@@ -182,7 +185,7 @@ export async function generateReplacement(
     const candidates = sorted.filter(p => !used.has(p.name))
     if (candidates.length === 0) throw new Error('대체할 장소가 없어요')
 
-    const themeRule = THEME_INSTRUCTIONS[theme] ?? THEME_INSTRUCTIONS.balanced
+    const themeRule = `${THEME_INSTRUCTIONS[theme] ?? THEME_INSTRUCTIONS.balanced}\n${QUALITY_RULE}`
 
     const systemPrompt = `You are a travel course planner. The user wants to swap ONE spot in an existing course for a different place. Respond with valid JSON only — no other text.
 

@@ -22,8 +22,33 @@ const FRANCHISE_KEYWORDS = [
     '올리브영', '다이소', '이마트', '홈플러스', '롯데마트',
 ]
 
-function isFranchise(name: string): boolean {
+// 여행지가 아닌 장소 — 이 단어가 포함되면 제외 (영화관·마트·생활편의·비관광 POI)
+const NON_TRAVEL_KEYWORDS = [
+    // 영화관
+    'CGV', '메가박스', '롯데시네마', '씨네Q', '씨네큐',
+    // 대형/창고형 유통
+    '트레이더스', '코스트코', '노브랜드', '하나로마트', '킴스클럽',
+    // 의료
+    '병원', '의원', '약국', '한의원', '치과', '동물병원',
+    // 교육
+    '학원', '어학원', '교습소', '독서실', '스터디카페',
+    // 금융/공공
+    '은행', '새마을금고', '신협', '우체국', '주민센터', '행정복지센터',
+    '구청', '시청', '경찰서', '소방서', '세무서',
+    // 차량/주유
+    '주유소', '충전소', '카센터', '정비', '세차', '중고차',
+    // 생활/오락(비관광)
+    '헬스', '피트니스', '휘트니스', 'PC방', '피시방', '노래', '당구', '스크린골프',
+    '부동산', '공인중개', '마트', '편의점',
+    // 비관광 카페 형태
+    '키즈카페', '만화카페', '룸카페', '보드게임', '무인카페',
+    // 교통
+    '주차장', '정류장', '버스터미널',
+]
+
+function isExcluded(name: string): boolean {
     return FRANCHISE_KEYWORDS.some(f => name.includes(f))
+        || NON_TRAVEL_KEYWORDS.some(f => name.includes(f))
 }
 
 // Haversine 거리 (미터)
@@ -119,6 +144,16 @@ const SEARCH_CONFIG = {
     '2n3d': { radius: 20000, size: 15 },
 }
 
+// 후보 랭킹 — 명소/자연/문화를 식당·카페보다 우선
+const CATEGORY_WEIGHT: Record<string, number> = {
+    '관광명소': 5, '자연': 4, '문화시설': 4, '문화': 4, '쇼핑': 3, '맛집': 3, '카페': 2,
+}
+// 카테고리별 후보 상한 — 식당·카페가 풀을 독식하지 않도록
+const CATEGORY_CAP: Record<string, number> = {
+    '관광명소': 16, '자연': 8, '문화시설': 8, '쇼핑': 6, '맛집': 12, '카페': 8,
+}
+const MAX_CANDIDATES = 34
+
 // 카테고리 검색 (반경 기반 — 당일치기용)
 async function searchByCategory(
     code: string, label: string,
@@ -132,7 +167,7 @@ async function searchByCategory(
     );
     const data = await res.json();
     return (data.documents || [])
-        .filter((d: any) => !isFranchise(d.place_name))
+        .filter((d: any) => !isExcluded(d.place_name))
         .map((d: any) => ({
             name: d.place_name,
             address: d.road_address_name || d.address_name,
@@ -156,7 +191,7 @@ async function searchByKeyword(
     );
     const data = await res.json();
     return (data.documents || [])
-        .filter((d: any) => !isFranchise(d.place_name))
+        .filter((d: any) => !isExcluded(d.place_name))
         .map((d: any) => ({
             name: d.place_name,
             address: d.road_address_name || d.address_name,
@@ -186,7 +221,7 @@ async function searchRegional(
     ])
     const [d1, d2] = await Promise.all([r1.json(), r2.json()])
     return [...(d1.documents || []), ...(d2.documents || [])]
-        .filter((d: any) => !isFranchise(d.place_name))
+        .filter((d: any) => !isExcluded(d.place_name))
         .map((d: any) => {
             const pLat = parseFloat(d.y)
             const pLng = parseFloat(d.x)
@@ -216,13 +251,15 @@ export async function searchNearby(
 
     if (tripType === 'day') {
         // 당일: 반경 기반 검색 (10km, 걷거나 짧은 이동)
-        const [landmarks, culture, food, cafe] = await Promise.all([
+        const [landmarks, spots, culture, nature, food, cafe] = await Promise.all([
             searchByCategory('AT4', '관광명소', lat, lng, radius, size),
+            searchByKeyword('가볼만한곳', '관광명소', lat, lng, radius, size),
             searchByCategory('CT1', '문화시설', lat, lng, radius, size),
+            searchByKeyword('공원', '자연', lat, lng, radius, size),
             searchByKeyword('맛집', '맛집', lat, lng, radius, size),
             searchByKeyword('카페', '카페', lat, lng, Math.min(radius, 8000), size),
         ])
-        all = [...landmarks, ...culture, ...food, ...cafe]
+        all = [...landmarks, ...spots, ...culture, ...nature, ...food, ...cafe]
 
     } else {
         // 숙박 여행: 광역 검색 (지역명 키워드, 반경 무제한)
@@ -250,9 +287,29 @@ export async function searchNearby(
 
     // 중복 제거 (같은 장소명)
     const seen = new Set<string>()
-    return all.filter(p => {
+    const dedup = all.filter(p => {
         if (seen.has(p.name)) return false
         seen.add(p.name)
         return true
     })
+
+    // 카테고리별로 가까운 순 정렬 후 상한 적용 (과다 카테고리 정리)
+    const byCat = new Map<string, any[]>()
+    for (const p of dedup) {
+        const arr = byCat.get(p.category) ?? []
+        arr.push(p)
+        byCat.set(p.category, arr)
+    }
+    const capped: any[] = []
+    for (const [cat, arr] of byCat) {
+        arr.sort((a, b) => a.distance - b.distance)
+        capped.push(...arr.slice(0, CATEGORY_CAP[cat] ?? 10))
+    }
+
+    // 명소·자연·문화 우선, 그다음 거리순 → 상위 후보만 AI에 전달
+    capped.sort((a, b) =>
+        (CATEGORY_WEIGHT[b.category] ?? 1) - (CATEGORY_WEIGHT[a.category] ?? 1)
+        || a.distance - b.distance,
+    )
+    return capped.slice(0, MAX_CANDIDATES)
 }
