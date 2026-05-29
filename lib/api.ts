@@ -42,11 +42,35 @@ export async function createCourse(
     theme = 'balanced',
     startTime = '09:00',
     nocache = false,
+    opts: { exclude?: string[]; note?: string } = {},
 ) {
     const res = await fetch('/api/course', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ locationName, lat, lng, places, tripType, theme, startTime, nocache }),
+        body: JSON.stringify({
+            locationName, lat, lng, places, tripType, theme, startTime, nocache,
+            exclude: opts.exclude ?? [],
+            note: opts.note ?? '',
+        }),
+    });
+    if (!res.ok) throw new Error((await res.json()).error);
+    return res.json();
+}
+
+// 단일 스팟 교체 — 나머지 일정은 유지하고 한 곳만 다른 곳으로
+export async function swapPlace(
+    locationName: string,
+    lat: number,
+    lng: number,
+    places: any[],
+    currentNames: string[],
+    target: { name: string; badge?: string; time?: string },
+    theme = 'balanced',
+) {
+    const res = await fetch('/api/swap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locationName, lat, lng, places, currentNames, target, theme }),
     });
     if (!res.ok) throw new Error((await res.json()).error);
     return res.json();
