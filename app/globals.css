@@ -9,11 +9,13 @@
   color-scheme: light;
   --bg: #ffffff;
   --bg2: #f9fafb;
-  --blue: #3182f6;
-  --blue2: #4593fc;
-  --blue3: #c9deff;
-  --blue4: #eaf2ff;
-  --blue-dark: #1b64da;
+  /* 블랙&화이트 톤 — 액센트(=브랜드/주요 액션)는 near-black */
+  --blue: #191f28;
+  --blue2: #333d4b;
+  --blue3: #d1d6db;
+  --blue4: #f2f4f6;
+  --blue-dark: #000000;
+  --on-accent: #ffffff;
   --text: #191f28;
   --text2: #4e5968;
   --text3: #8b95a1;
@@ -54,10 +56,13 @@
     color-scheme: dark;
     --bg: #17171c;
     --bg2: #1c1d22;
-    --blue: #4593fc;
-    --blue2: #5b9dfd;
-    --blue3: #2b3a55;
-    --blue4: #1b2436;
+    /* 다크 모노크롬 — 액센트는 near-white */
+    --blue: #f2f4f6;
+    --blue2: #d1d6db;
+    --blue3: #3a3b41;
+    --blue4: #26272c;
+    --blue-dark: #ffffff;
+    --on-accent: #17171c;
     --text: #f2f4f6;
     --text2: #b0b8c1;
     --text3: #6b7684;
@@ -89,10 +94,12 @@
   color-scheme: dark;
   --bg: #17171c;
   --bg2: #1c1d22;
-  --blue: #4593fc;
-  --blue2: #5b9dfd;
-  --blue3: #2b3a55;
-  --blue4: #1b2436;
+  --blue: #f2f4f6;
+  --blue2: #d1d6db;
+  --blue3: #3a3b41;
+  --blue4: #26272c;
+  --blue-dark: #ffffff;
+  --on-accent: #17171c;
   --text: #f2f4f6;
   --text2: #b0b8c1;
   --text3: #6b7684;
@@ -191,7 +198,7 @@ body {
 
 .btn-primary {
   background: var(--blue);
-  color: #fff;
+  color: var(--on-accent);
 }
 .btn-primary:active { background: var(--blue-dark); }
 
@@ -237,10 +244,11 @@ body {
   border-radius: var(--r-xs);
   letter-spacing: -0.2px;
 }
-.chip-blue   { background: var(--blue4); color: var(--blue); }
-.chip-teal   { background: rgba(20, 184, 166, 0.12); color: #0d9488; }
-.chip-rose   { background: rgba(240, 68, 82, 0.12);  color: #f04452; }
-.chip-amber  { background: rgba(245, 159, 0, 0.14);  color: #e08e0b; }
+/* 블랙&화이트 — 칩도 모노크롬으로 통일 */
+.chip-blue   { background: var(--blue4); color: var(--text); }
+.chip-teal   { background: var(--surface); color: var(--text2); }
+.chip-rose   { background: var(--surface); color: var(--text2); }
+.chip-amber  { background: var(--surface); color: var(--text2); }
 .chip-white  {
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);

@@ -21,13 +21,13 @@ const OB_SLIDES: {
   {
     seed: 42, ti: 1,
     icon: 'route', iconLabel: '최적 동선 자동 생성',
-    title: (<>가고 싶던 곳들이<br/><em style={{ color: '#15a86b', fontStyle: 'normal' }}>여행 코스</em>로</>),
+    title: (<>가고 싶던 곳들이<br/><em style={{ color: 'var(--blue)', fontStyle: 'normal' }}>여행 코스</em>로</>),
     desc: '당일치기부터 2박 3일까지\nAI가 최적의 여행 동선을 짜드려요',
   },
   {
     seed: 78, ti: 3,
     icon: 'share', iconLabel: '링크 하나로 공유',
-    title: (<>친구와 <em style={{ color: '#8b5cf6', fontStyle: 'normal' }}>공유</em>하고<br/>같이 떠나요</>),
+    title: (<>친구와 <em style={{ color: 'var(--blue)', fontStyle: 'normal' }}>공유</em>하고<br/>같이 떠나요</>),
     desc: '완성된 코스를 링크로 공유하면\n앱 없이도 바로 확인할 수 있어요',
   },
 ]
@@ -89,7 +89,7 @@ export default function HomePage() {
   const SplashOverlay = (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 999,
-      background: 'var(--blue)',
+      background: '#191f28',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       animation: 'splashOut 0.4s 1.5s ease forwards', pointerEvents: 'none',
     }}>
@@ -137,7 +137,7 @@ export default function HomePage() {
             position: 'relative', boxShadow: 'var(--sh-lg)', marginBottom: 36,
           }}>
             <ObCanvas seed={slide.seed} ti={slide.ti}/>
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(5,15,50,0.65))' }}/>
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.65))' }}/>
             {/* 기능 카드 */}
             <div style={{
               position: 'absolute', bottom: 16, left: 14, right: 14,
@@ -215,7 +215,7 @@ export default function HomePage() {
         <div style={{ padding: '0 20px', marginBottom: 32 }}>
           <button onClick={() => router.push('/upload')} style={{
             width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', borderRadius: 'var(--r)',
-            background: 'var(--blue)', border: 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.1s',
+            background: 'var(--cta-dark)', border: 'none', cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.1s',
           }}
             onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.985)')}
             onTouchEnd={e => (e.currentTarget.style.transform = '')}
