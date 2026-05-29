@@ -246,7 +246,7 @@ export default function HomePage() {
         <div className="sec-hdr">
           <span className="sec-title">저장한 코스</span>
           {savedCourses.length > 0 && (
-            <span className="sec-more" onClick={() => showToast('전체 보기 준비 중')}>전체보기</span>
+            <span className="sec-more" onClick={() => router.push('/saved')}>전체보기</span>
           )}
         </div>
 
