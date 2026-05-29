@@ -69,21 +69,21 @@ export default function PlanPage() {
 
   // localStorage: saved state
   useEffect(() => {
-    if (!course.title) return
+    if (!course?.title) return
     try {
       const list = JSON.parse(localStorage.getItem('someday-saved') || '[]')
       setSaved(list.some((s: any) => s.course.title === course.title))
     } catch {}
-  }, [course.title])
+  }, [course?.title])
 
   // localStorage: visited state
   useEffect(() => {
-    if (!course.title) return
+    if (!course?.title) return
     try {
       const v = JSON.parse(localStorage.getItem(`someday-visited-${course.title}`) || '[]')
       setVisited(new Set(v))
     } catch {}
-  }, [course.title])
+  }, [course?.title])
 
   useEffect(() => {
     const cv = heroCv.current
@@ -93,6 +93,7 @@ export default function PlanPage() {
   }, [region])
 
   function toggleSave() {
+    if (!course) return
     try {
       const list = JSON.parse(localStorage.getItem('someday-saved') || '[]')
       if (saved) {
@@ -110,6 +111,7 @@ export default function PlanPage() {
   }
 
   function toggleVisit(order: number) {
+    if (!course) return
     setVisited(prev => {
       const next = new Set(prev)
       const wasIn = next.has(order)
@@ -244,8 +246,8 @@ export default function PlanPage() {
             <button key={d} onClick={() => setDayIdx(i)} style={{
               flexShrink:0, padding:'7px 16px', borderRadius:20,
               fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
-              border: i===dayIdx ? 'none' : '1px solid rgba(180,200,255,0.4)',
-              background: i===dayIdx ? color : 'rgba(255,255,255,0.65)',
+              border: i===dayIdx ? 'none' : '1px solid var(--border-soft)',
+              background: i===dayIdx ? color : 'var(--surface)',
               color: i===dayIdx ? '#fff' : 'var(--text3)',
               boxShadow: i===dayIdx ? `0 4px 14px ${color}55` : undefined,
               transition:'all 0.18s',
@@ -345,7 +347,7 @@ export default function PlanPage() {
             padding:'20px 20px', paddingBottom:'max(24px, env(safe-area-inset-bottom))',
             boxShadow:'0 -8px 32px rgba(0,0,0,0.12)',
           }}>
-            <div style={{ width:36, height:4, background:'rgba(180,200,255,0.45)', borderRadius:2, margin:'0 auto 20px' }}/>
+            <div style={{ width:36, height:4, background:'var(--border-hair)', borderRadius:2, margin:'0 auto 20px' }}/>
             <div style={{ fontSize:16, fontWeight:700, marginBottom:8, letterSpacing:-0.3 }}>코스를 저장하지 않으셨어요</div>
             <div style={{ fontSize:13, color:'var(--text3)', marginBottom:24, lineHeight:1.75 }}>
               나가면 이 코스를 홈에서 다시 볼 수 있지만,<br/>저장해두면 더 안전하게 보관돼요.
@@ -375,7 +377,7 @@ export default function PlanPage() {
             padding:'20px 20px', paddingBottom:'max(28px, env(safe-area-inset-bottom))',
             boxShadow:'0 -8px 32px rgba(0,0,0,0.12)',
           }}>
-            <div style={{ width:36, height:4, background:'rgba(180,200,255,0.45)', borderRadius:2, margin:'0 auto 20px' }}/>
+            <div style={{ width:36, height:4, background:'var(--border-hair)', borderRadius:2, margin:'0 auto 20px' }}/>
             <div style={{ fontSize:16, fontWeight:700, marginBottom:18, letterSpacing:-0.3 }}>코스 재생성</div>
 
             <div style={{ fontSize:13, fontWeight:700, color:'var(--text2)', marginBottom:10 }}>여행 테마</div>
@@ -389,9 +391,9 @@ export default function PlanPage() {
                 <button key={opt.type} onClick={() => setRegenTheme(opt.type)} style={{
                   padding:'8px 14px', borderRadius:20, cursor:'pointer', fontFamily:'inherit',
                   fontSize:13, fontWeight:600,
-                  background: regenTheme === opt.type ? 'var(--blue)' : 'rgba(255,255,255,0.7)',
+                  background: regenTheme === opt.type ? 'var(--blue)' : 'var(--surface)',
                   color: regenTheme === opt.type ? '#fff' : 'var(--text2)',
-                  border: regenTheme === opt.type ? 'none' : '1.5px solid rgba(200,215,255,0.5)',
+                  border: regenTheme === opt.type ? 'none' : '1.5px solid var(--border-soft)',
                   transition:'all 0.15s',
                 }}>
                   {opt.emoji} {opt.label}
@@ -409,9 +411,9 @@ export default function PlanPage() {
                 <button key={opt.type} onClick={() => setRegenType(opt.type)} style={{
                   flex:1, padding:'10px 0', borderRadius:16, cursor:'pointer', fontFamily:'inherit',
                   fontSize:13, fontWeight:600,
-                  background: regenType === opt.type ? 'var(--blue)' : 'rgba(255,255,255,0.7)',
+                  background: regenType === opt.type ? 'var(--blue)' : 'var(--surface)',
                   color: regenType === opt.type ? '#fff' : 'var(--text2)',
-                  border: regenType === opt.type ? 'none' : '1.5px solid rgba(200,215,255,0.5)',
+                  border: regenType === opt.type ? 'none' : '1.5px solid var(--border-soft)',
                   transition:'all 0.15s',
                 }}>
                   {opt.label}
@@ -625,8 +627,8 @@ function MapView({ course, region, onBack }: { course:Course; region:{name:strin
             <button key={i} onClick={() => setDayFilter(i)} style={{
               flexShrink:0, padding:'7px 18px', borderRadius:20,
               fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
-              border: i===dayFilter ? 'none' : '1px solid rgba(180,200,255,0.4)',
-              background: i===dayFilter ? color : 'rgba(255,255,255,0.65)',
+              border: i===dayFilter ? 'none' : '1px solid var(--border-soft)',
+              background: i===dayFilter ? color : 'var(--surface)',
               color: i===dayFilter ? '#fff' : 'var(--text3)',
               transition:'all 0.18s',
             }}>{lbl}</button>
@@ -637,19 +639,19 @@ function MapView({ course, region, onBack }: { course:Course; region:{name:strin
       <div style={{ flex:1, position:'relative', overflow:'hidden' }}>
         <div ref={mapDivRef} style={{ width:'100%', height:'100%' }}/>
         {!mapReady && (
-          <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'var(--blue4)' }}>
+          <div className="skeleton" style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'var(--blue4)' }}>
             <div style={{ fontSize:13, color:'var(--text3)' }}>지도 로딩 중...</div>
           </div>
         )}
 
         <div style={{
           position:'absolute', bottom:0, left:0, right:0,
-          background:'rgba(255,255,255,0.94)', backdropFilter:'blur(28px) saturate(200%)', WebkitBackdropFilter:'blur(28px) saturate(200%)',
-          border:'1px solid rgba(255,255,255,0.95)', borderBottom:'none',
+          background:'var(--sheet)', backdropFilter:'blur(28px) saturate(200%)', WebkitBackdropFilter:'blur(28px) saturate(200%)',
+          border:'1px solid var(--glass-border)', borderBottom:'none',
           borderRadius:'24px 24px 0 0', boxShadow:'0 -4px 24px rgba(59,126,248,0.10)',
           padding:'14px 18px', paddingBottom:'max(18px, env(safe-area-inset-bottom))', zIndex:10,
         }}>
-          <div style={{ width:36, height:4, borderRadius:2, background:'rgba(180,200,255,0.45)', margin:'0 auto 14px' }}/>
+          <div style={{ width:36, height:4, borderRadius:2, background:'var(--border-hair)', margin:'0 auto 14px' }}/>
           <div className="glass-subtle" style={{ display:'flex', gap:12, alignItems:'center', padding:'12px 14px', borderRadius:'var(--r-sm)', marginBottom:12 }}>
             <div style={{ width:48, height:48, borderRadius:12, overflow:'hidden', flexShrink:0 }}>
               <PlaceImage name={selected?.name ?? ''} badge={(selected as any)?.badge} width={48} height={48}/>
@@ -753,7 +755,7 @@ function ShareView({ course, region, tripLabel, onBack }: { course:Course; regio
             ].map((s, i) => (
               <div key={i} onClick={() => showToast(`${s.label}으로 이동`)} style={{
                 display:'flex', alignItems:'center', gap:14, padding:'13px 16px',
-                borderRadius:'var(--r-sm)', background:'var(--text)', color:'#fff',
+                borderRadius:'var(--r-sm)', background:'var(--cta-dark)', color:'#fff',
                 cursor:'pointer', marginBottom: i===0 ? 8 : 0,
               }}>
                 <div style={{ width:36, height:36, borderRadius:10, background:'rgba(255,255,255,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>

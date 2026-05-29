@@ -33,9 +33,16 @@ export const viewport = {
   viewportFit: 'cover',
 }
 
+// Runs before first paint to apply the saved theme and avoid a flash.
+// 'system' (or unset) leaves the prefers-color-scheme media query in charge.
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('someday-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={`${dmSerif.variable} ${notoSansKr.variable}`}>
+    <html lang="ko" className={`${dmSerif.variable} ${notoSansKr.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+      </head>
       <body style={{ fontFamily: 'var(--font-noto-kr), -apple-system, sans-serif' }}>
         {children}
       </body>

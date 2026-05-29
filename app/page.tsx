@@ -187,7 +187,7 @@ export default function HomePage() {
             <button onClick={finishOnboard} style={{
               flex: 1, height: 52, borderRadius: 'var(--r-sm)',
               fontSize: 14, fontWeight: 600, color: 'var(--text3)',
-              background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(180,200,255,0.4)',
+              background: 'var(--surface)', border: '1px solid var(--border-soft)',
               cursor: 'pointer', fontFamily: 'inherit',
             }}>건너뛰기</button>
             <button className="btn btn-primary" style={{ flex: 2 }}
@@ -260,8 +260,8 @@ export default function HomePage() {
           <div style={{ padding: '0 20px' }}>
             <div style={{
               padding: '24px 20px', borderRadius: 18,
-              background: 'rgba(255,255,255,0.55)', textAlign: 'center',
-              border: '1.5px dashed rgba(59,126,248,0.18)',
+              background: 'var(--surface-soft)', textAlign: 'center',
+              border: '1.5px dashed var(--dash)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
             }}>
               <Icon name="bookmark" size={28} color="var(--blue3)" strokeWidth={1.2}/>
@@ -285,7 +285,7 @@ export default function HomePage() {
               display: 'flex', alignItems: 'center', gap: 14,
               cursor: 'pointer', border: '2px solid rgba(59,126,248,0.2)',
               fontFamily: 'inherit', textAlign: 'left', transition: 'transform 0.14s',
-              background: 'linear-gradient(135deg, rgba(59,126,248,0.06), rgba(255,255,255,0.85))',
+              background: 'linear-gradient(135deg, rgba(59,126,248,0.06), var(--surface))',
             }}
               onTouchStart={e => (e.currentTarget.style.transform = 'scale(0.98)')}
               onTouchEnd={e => (e.currentTarget.style.transform = '')}
@@ -308,9 +308,9 @@ export default function HomePage() {
             </button>
           ) : (
             <div style={{
-              padding: '36px 20px', borderRadius: 18, background: 'rgba(255,255,255,0.55)',
+              padding: '36px 20px', borderRadius: 18, background: 'var(--surface-soft)',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center',
-              border: '1.5px dashed rgba(59,126,248,0.18)',
+              border: '1.5px dashed var(--dash)',
             }}>
               <Icon name="route" size={32} color="var(--blue3)" strokeWidth={1.2}/>
               <div>
@@ -386,7 +386,7 @@ function SavedCard({ item, onOpen, onDelete }: { item: SavedItem; onOpen: () => 
             maxWidth: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{region.name}</div>
         </div>
-        <div className="glass" style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.85)', textAlign: 'left' }}>
+        <div className="glass" style={{ padding: '10px 12px', borderTop: '1px solid var(--glass-border)', textAlign: 'left' }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {course.title}
           </div>

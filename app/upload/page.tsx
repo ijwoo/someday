@@ -374,7 +374,7 @@ export default function UploadPage() {
                       width: '100%', padding: '14px 16px',
                       display: 'flex', alignItems: 'center', gap: 14,
                       borderRadius: 'var(--r-sm)', cursor: 'pointer',
-                      border: '1px solid rgba(255,255,255,0.9)',
+                      border: '1px solid var(--glass-border)',
                       fontFamily: 'inherit', textAlign: 'left',
                       animation: `itemIn 0.3s ${i * 0.07}s ease both`,
                     }}>
@@ -409,7 +409,7 @@ export default function UploadPage() {
                       width: '100%', padding: '14px 16px',
                       display: 'flex', alignItems: 'center', gap: 14,
                       borderRadius: 'var(--r-sm)', cursor: 'pointer',
-                      border: '1px solid rgba(255,255,255,0.9)',
+                      border: '1px solid var(--glass-border)',
                       fontFamily: 'inherit', textAlign: 'left',
                       animation: `itemIn 0.3s ${i * 0.07}s ease both`,
                     }}>
@@ -463,7 +463,7 @@ export default function UploadPage() {
                   width: '100%', padding: '14px 16px',
                   display: 'flex', alignItems: 'center', gap: 14,
                   borderRadius: 'var(--r-sm)', cursor: 'pointer',
-                  border: '1px solid rgba(255,255,255,0.9)',
+                  border: '1px solid var(--glass-border)',
                   fontFamily: 'inherit', textAlign: 'left',
                   animation: `itemIn 0.3s ${i * 0.07}s ease both`,
                 }}>
@@ -511,8 +511,8 @@ export default function UploadPage() {
                     width: '100%', padding: '14px 16px',
                     display: 'flex', alignItems: 'center', gap: 14,
                     borderRadius: 'var(--r-sm)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                    background: isSel ? 'linear-gradient(135deg, rgba(59,126,248,0.12), rgba(91,148,255,0.06))' : 'rgba(255,255,255,0.7)',
-                    border: isSel ? '2px solid rgba(59,126,248,0.5)' : '1.5px solid rgba(200,215,255,0.5)',
+                    background: isSel ? 'linear-gradient(135deg, rgba(59,126,248,0.12), rgba(91,148,255,0.06))' : 'var(--surface)',
+                    border: isSel ? '2px solid rgba(59,126,248,0.5)' : '1.5px solid var(--border-soft)',
                     boxShadow: isSel ? '0 2px 12px rgba(59,126,248,0.15)' : 'none',
                     transition: 'all 0.15s',
                     animation: `itemIn 0.25s ${i * 0.06}s ease both`,
@@ -521,7 +521,7 @@ export default function UploadPage() {
                       width: 40, height: 40, borderRadius: 12, flexShrink: 0,
                       background: isSel
                         ? (opt.type === 'day' ? 'rgba(245,158,11,0.15)' : opt.type === '1n2d' ? 'rgba(59,126,248,0.15)' : 'rgba(139,92,246,0.15)')
-                        : 'rgba(200,215,255,0.2)',
+                        : 'var(--border-hair)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       <Icon name={opt.icon} size={20}
@@ -535,7 +535,7 @@ export default function UploadPage() {
                     <div style={{
                       width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
                       background: isSel ? 'var(--blue)' : 'transparent',
-                      border: isSel ? 'none' : '1.5px solid rgba(180,200,255,0.5)',
+                      border: isSel ? 'none' : '1.5px solid var(--border-soft)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       {isSel && <Icon name="check" size={11} color="#fff" strokeWidth={2.5}/>}
@@ -554,9 +554,9 @@ export default function UploadPage() {
                   <button key={opt.type} onClick={() => setTheme(opt.type)} style={{
                     padding: '8px 14px', borderRadius: 20, cursor: 'pointer', fontFamily: 'inherit',
                     fontSize: 13, fontWeight: 600,
-                    background: isSel ? 'var(--blue)' : 'rgba(255,255,255,0.7)',
+                    background: isSel ? 'var(--blue)' : 'var(--surface)',
                     color: isSel ? '#fff' : 'var(--text2)',
-                    border: isSel ? 'none' : '1.5px solid rgba(200,215,255,0.5)',
+                    border: isSel ? 'none' : '1.5px solid var(--border-soft)',
                     boxShadow: isSel ? '0 2px 10px rgba(59,126,248,0.25)' : 'none',
                     transition: 'all 0.15s',
                   }}>
@@ -577,9 +577,9 @@ export default function UploadPage() {
                   <button key={t} onClick={() => setStartTime(t)} style={{
                     flexShrink: 0, padding: '7px 13px', borderRadius: 16, cursor: 'pointer', fontFamily: 'inherit',
                     fontSize: 13, fontWeight: 600,
-                    background: isSel ? 'var(--blue)' : 'rgba(255,255,255,0.7)',
+                    background: isSel ? 'var(--blue)' : 'var(--surface)',
                     color: isSel ? '#fff' : 'var(--text2)',
-                    border: isSel ? 'none' : '1.5px solid rgba(200,215,255,0.5)',
+                    border: isSel ? 'none' : '1.5px solid var(--border-soft)',
                     boxShadow: isSel ? '0 2px 10px rgba(59,126,248,0.25)' : 'none',
                     transition: 'all 0.15s',
                   }}>

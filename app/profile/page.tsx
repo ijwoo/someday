@@ -3,16 +3,30 @@ import { useEffect, useState } from 'react'
 import BottomNav from '@/components/BottomNav'
 import Icon from '@/components/Icon'
 import Toast, { showToast } from '@/components/Toast'
+import { getThemeMode, applyThemeMode, type ThemeMode } from '@/lib/theme'
+
+const THEME_OPTIONS: { mode: ThemeMode; label: string }[] = [
+  { mode: 'system', label: '시스템' },
+  { mode: 'light',  label: '라이트' },
+  { mode: 'dark',   label: '다크' },
+]
 
 export default function ProfilePage() {
   const [savedCount, setSavedCount] = useState(0)
+  const [themeMode, setThemeMode] = useState<ThemeMode>('system')
 
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('someday-saved') || '[]')
       setSavedCount(saved.length)
     } catch {}
+    setThemeMode(getThemeMode())
   }, [])
+
+  function changeTheme(mode: ThemeMode) {
+    applyThemeMode(mode)
+    setThemeMode(mode)
+  }
 
   function resetOnboarding() {
     try {
@@ -61,10 +75,48 @@ export default function ProfilePage() {
         <div style={{ padding: '0 20px' }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', marginBottom: 10, letterSpacing: 0.3, textTransform: 'uppercase' }}>설정</div>
           <div className="glass" style={{ borderRadius: 18, overflow: 'hidden' }}>
+            {/* 화면 테마 */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              padding: '14px 18px', borderBottom: '1px solid var(--border-hair)',
+            }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,126,248,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="moon" size={16} color="var(--blue)" strokeWidth={1.8}/>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: -0.2 }}>화면 테마</div>
+              </div>
+              <div role="radiogroup" aria-label="화면 테마" style={{
+                display: 'flex', gap: 2, padding: 3, borderRadius: 12,
+                background: 'var(--blue4)', flexShrink: 0,
+              }}>
+                {THEME_OPTIONS.map(opt => {
+                  const isSel = themeMode === opt.mode
+                  return (
+                    <button
+                      key={opt.mode}
+                      role="radio"
+                      aria-checked={isSel}
+                      onClick={() => changeTheme(opt.mode)}
+                      style={{
+                        padding: '6px 11px', borderRadius: 9, cursor: 'pointer',
+                        fontFamily: 'inherit', fontSize: 12, fontWeight: 600,
+                        border: 'none', transition: 'background 0.18s, color 0.18s',
+                        background: isSel ? 'var(--blue)' : 'transparent',
+                        color: isSel ? '#fff' : 'var(--text3)',
+                        boxShadow: isSel ? '0 2px 8px rgba(59,126,248,0.3)' : 'none',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
             <button onClick={resetOnboarding} style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 14,
               padding: '16px 18px', background: 'none', border: 'none',
-              borderBottom: '1px solid rgba(200,215,255,0.25)',
+              borderBottom: '1px solid var(--border-hair)',
               cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
             }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,126,248,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
