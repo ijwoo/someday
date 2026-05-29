@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import BottomNav from '@/components/BottomNav'
 import Icon from '@/components/Icon'
 import Toast, { showToast } from '@/components/Toast'
@@ -12,6 +13,7 @@ const THEME_OPTIONS: { mode: ThemeMode; label: string }[] = [
 ]
 
 export default function ProfilePage() {
+  const router = useRouter()
   const [savedCount, setSavedCount] = useState(0)
   const [themeMode, setThemeMode] = useState<ThemeMode>('system')
 
@@ -63,12 +65,24 @@ export default function ProfilePage() {
 
         {/* 통계 */}
         <div style={{ padding: '0 20px', marginBottom: 28 }}>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <div className="glass" style={{ flex: 1, borderRadius: 18, padding: '16px 14px', textAlign: 'center' }}>
-              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--blue)', letterSpacing: -0.5 }}>{savedCount}</div>
-              <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>저장한 코스</div>
+          <button
+            className="glass"
+            onClick={() => router.push('/saved')}
+            style={{
+              width: '100%', borderRadius: 18, padding: '16px 18px',
+              display: 'flex', alignItems: 'center', gap: 14,
+              cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+            }}
+          >
+            <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(59,126,248,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Icon name="bookmark" size={20} color="var(--blue)" strokeWidth={1.8}/>
             </div>
-          </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: -0.2, color: 'var(--text)' }}>저장한 코스</div>
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{savedCount}개 보관 중 · 전체보기</div>
+            </div>
+            <Icon name="chevron-right" size={16} color="var(--text3)" strokeWidth={1.8}/>
+          </button>
         </div>
 
         {/* 설정 항목 */}
