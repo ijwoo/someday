@@ -7,7 +7,7 @@ import Loading from '@/components/Loading'
 import Toast, { showToast } from '@/components/Toast'
 import Icon from '@/components/Icon'
 import BottomNav from '@/components/BottomNav'
-import { fetchPlaces, createCourse } from '@/lib/api'
+import { fetchPlaces, createCourse, swapPlace } from '@/lib/api'
 import type { TripType, Theme, Course, CourseStep, RegenInfo } from '@/types'
 
 const TAG = { food:'맛집', view:'뷰맛집', cafe:'카페', culture:'문화' }
@@ -46,6 +46,9 @@ export default function PlanPage() {
   const [showRegenSheet, setShowRegenSheet] = useState(false)
   const [regenTheme, setRegenTheme] = useState<Theme>('balanced')
   const [regenType, setRegenType] = useState<TripType>('day')
+  const [excluded, setExcluded] = useState<string[]>([])
+  const [regenNote, setRegenNote] = useState('')
+  const [actionSpot, setActionSpot] = useState<CourseStep | null>(null)
   const heroCv = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -124,12 +127,14 @@ export default function PlanPage() {
     })
   }
 
-  async function handleRegen(overrideTheme?: Theme, overrideType?: TripType) {
+  async function handleRegen(overrideTheme?: Theme, overrideType?: TripType, overrideExclude?: string[]) {
     const raw = localStorage.getItem('someday-regen')
     if (!raw) { showToast('재생성 정보가 없어요'); return }
     const regen: RegenInfo = JSON.parse(raw)
     const effectiveTheme = overrideTheme ?? regen.theme
     const effectiveType = overrideType ?? regen.tripType
+    const effectiveExclude = overrideExclude ?? excluded
+    const note = regenNote.trim()
     setShowRegenSheet(false)
     setLoading(true)
     setLoadTitle('주변 장소 검색 중')
@@ -141,6 +146,7 @@ export default function PlanPage() {
       const newCourse = await createCourse(
         regen.locationName, regen.lat, regen.lng, places,
         effectiveType, effectiveTheme, regen.startTime, true,
+        { exclude: effectiveExclude, note },
       )
       setCourse(newCourse)
       setTripType(effectiveType)
@@ -153,6 +159,44 @@ export default function PlanPage() {
       showToast('새 코스가 만들어졌어요')
     } catch {
       showToast('재생성에 실패했어요')
+    }
+    setLoading(false)
+  }
+
+  async function handleSwap(spot: CourseStep) {
+    setActionSpot(null)
+    const raw = localStorage.getItem('someday-regen')
+    if (!raw || !course) { showToast('이 코스는 장소 교체를 지원하지 않아요'); return }
+    const regen: RegenInfo = JSON.parse(raw)
+    setLoading(true)
+    setLoadTitle('다른 장소 찾는 중')
+    setLoadSub(`${spot.name} 대신 어울리는 곳을 골라요`)
+    try {
+      const { places } = await fetchPlaces(regen.lat, regen.lng, regen.tripType)
+      const currentNames = course.steps.map(s => s.name)
+      const repl = await swapPlace(
+        regen.locationName, regen.lat, regen.lng, places, currentNames,
+        { name: spot.name, badge: (spot as any).badge, time: spot.time }, regen.theme,
+      )
+      // 위치(order/time/day)는 유지하고 내용만 교체
+      const newSteps = course.steps.map(s => s.order === spot.order
+        ? {
+            ...s,
+            name: repl.name ?? s.name,
+            desc: repl.desc ?? s.desc,
+            duration: repl.duration ?? s.duration,
+            badge: repl.badge ?? (s as any).badge,
+            tags: repl.tags ?? (s as any).tags,
+            lat: repl.lat ?? s.lat,
+            lng: repl.lng ?? s.lng,
+          }
+        : s)
+      const newCourse = { ...course, steps: newSteps }
+      setCourse(newCourse)
+      localStorage.setItem('someday-course', JSON.stringify(newCourse))
+      showToast(`${repl.name}(으)로 교체했어요`)
+    } catch {
+      showToast('장소 교체에 실패했어요')
     }
     setLoading(false)
   }
@@ -290,6 +334,7 @@ export default function PlanPage() {
                   last={i === filtered.length - 1}
                   visited={visited.has(item.order)}
                   onToggleVisit={() => toggleVisit(item.order)}
+                  onMore={() => setActionSpot(item)}
                   dayColor={DAY_COLORS[item.day ?? 1] ?? 'var(--blue)'}
                 />
               </div>
@@ -421,11 +466,82 @@ export default function PlanPage() {
               ))}
             </div>
 
+            {excluded.length > 0 && (
+              <>
+                <div style={{ fontSize:13, fontWeight:700, color:'var(--text2)', marginBottom:10 }}>제외한 장소</div>
+                <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
+                  {excluded.map(name => (
+                    <button key={name} onClick={() => setExcluded(prev => prev.filter(n => n !== name))} style={{
+                      display:'inline-flex', alignItems:'center', gap:6,
+                      padding:'8px 12px', borderRadius:20, cursor:'pointer', fontFamily:'inherit',
+                      fontSize:13, fontWeight:600, color:'var(--text2)',
+                      background:'var(--surface)', border:'1.5px solid var(--border-soft)',
+                    }}>
+                      {name}
+                      <Icon name="x" size={12} color="var(--text3)" strokeWidth={2.2}/>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div style={{ fontSize:13, fontWeight:700, color:'var(--text2)', marginBottom:10 }}>
+              추가 요청 <span style={{ fontSize:11, fontWeight:500, color:'var(--text3)' }}>(선택)</span>
+            </div>
+            <input
+              value={regenNote}
+              onChange={e => setRegenNote(e.target.value)}
+              placeholder="예: 카페 더 많이, 이동 적게"
+              style={{
+                width:'100%', height:46, padding:'0 14px', marginBottom:24,
+                borderRadius:'var(--r-sm)', fontFamily:'inherit', fontSize:14,
+                background:'var(--surface)', color:'var(--text)',
+                border:'1.5px solid var(--border-soft)', outline:'none',
+              }}
+            />
+
             <button className="btn btn-primary" style={{ width:'100%' }}
               onClick={() => handleRegen(regenTheme, regenType)}>
               <Icon name="sparkle" size={18} color="#fff" strokeWidth={1.5}/>
               새로운 코스 만들기
             </button>
+          </div>
+        </>
+      )}
+
+      {/* 스팟 미세조정 액션 시트 */}
+      {actionSpot && (
+        <>
+          <div onClick={() => setActionSpot(null)} style={{
+            position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', zIndex:200,
+          }}/>
+          <div style={{
+            position:'fixed', bottom:0, left:0, right:0, zIndex:201,
+            background:'var(--bg)', borderRadius:'24px 24px 0 0',
+            padding:'20px 20px', paddingBottom:'max(24px, env(safe-area-inset-bottom))',
+            boxShadow:'0 -8px 32px rgba(0,0,0,0.12)',
+          }}>
+            <div style={{ width:36, height:4, background:'var(--border-hair)', borderRadius:2, margin:'0 auto 18px' }}/>
+            <div style={{ fontSize:16, fontWeight:700, marginBottom:4, letterSpacing:-0.3 }}>{actionSpot.name}</div>
+            <div style={{ fontSize:13, color:'var(--text3)', marginBottom:18 }}>이 장소를 어떻게 조정할까요?</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              <button className="btn btn-primary" onClick={() => handleSwap(actionSpot)}>
+                <Icon name="refresh" size={16} color="#fff" strokeWidth={2}/>
+                다른 곳으로 교체
+              </button>
+              <button className="btn btn-secondary" onClick={() => {
+                const next = excluded.includes(actionSpot.name) ? excluded : [...excluded, actionSpot.name]
+                setExcluded(next)
+                setActionSpot(null)
+                handleRegen(undefined, undefined, next)
+              }}>
+                <Icon name="x" size={16} color="var(--text)" strokeWidth={2}/>
+                이 장소 빼고 다시 추천
+              </button>
+              <button className="btn btn-secondary" onClick={() => setActionSpot(null)}>
+                취소
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -438,9 +554,9 @@ export default function PlanPage() {
 }
 
 /* ── Timeline item ── */
-function TLItem({ item, idx, last, visited, onToggleVisit, dayColor }: {
+function TLItem({ item, idx, last, visited, onToggleVisit, onMore, dayColor }: {
   item: CourseStep; idx: number; last: boolean
-  visited: boolean; onToggleVisit: () => void; dayColor: string
+  visited: boolean; onToggleVisit: () => void; onMore: () => void; dayColor: string
 }) {
   const badge = (item as any).badge ?? '명소'
   const tags  = (item as any).tags  ?? ['view']
@@ -498,6 +614,17 @@ function TLItem({ item, idx, last, visited, onToggleVisit, dayColor }: {
               border:'1px solid rgba(255,255,255,0.3)', color:'#fff',
               fontSize:10, fontWeight:600, padding:'3px 9px', borderRadius:8,
             }}>{badge}</span>
+            <button
+              onClick={(e) => { e.stopPropagation(); onMore() }}
+              aria-label="이 장소 옵션"
+              style={{
+                position:'absolute', top:7, right:9, width:28, height:28, borderRadius:'50%',
+                background:'rgba(0,0,0,0.38)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
+                border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2,
+              }}
+            >
+              <Icon name="dots" size={15} color="#fff" strokeWidth={2}/>
+            </button>
             {/* 카카오맵 힌트 */}
             <div style={{
               position:'absolute', bottom:8, right:10,

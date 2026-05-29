@@ -10,11 +10,15 @@ export async function POST(req: NextRequest) {
             theme = 'balanced',
             startTime = '09:00',
             nocache = false,
+            exclude = [],
+            note = '',
         } = await req.json();
 
+        // 제약(제외 장소/추가 요청)이 있으면 캐시를 쓰지 않음 — 매번 새 코스
+        const hasConstraints = (Array.isArray(exclude) && exclude.length > 0) || (typeof note === 'string' && note.trim() !== '');
         const key = coordKey(lat, lng, tripType, theme);
 
-        if (!nocache) {
+        if (!nocache && !hasConstraints) {
             const cached = getCached(key);
             if (cached) {
                 console.log(`[course] 캐시 히트: ${key}`);
@@ -22,7 +26,7 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        const course = await generateCourse(locationName, places, tripType, theme, startTime);
+        const course = await generateCourse(locationName, places, tripType, theme, startTime, { exclude, note });
 
         // Kakao places 데이터로 각 step에 lat/lng 좌표 보강
         if (course.steps && Array.isArray(places)) {
@@ -38,7 +42,7 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        setCached(key, course);
+        if (!hasConstraints) setCached(key, course);
         return NextResponse.json(course);
 
     } catch (err: any) {

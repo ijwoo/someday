@@ -57,9 +57,22 @@ export async function generateCourse(
     tripType: 'day' | '1n2d' | '2n3d' = 'day',
     theme = 'balanced',
     startTime = '09:00',
+    opts: { exclude?: string[]; note?: string } = {},
 ) {
+    const exclude = opts.exclude ?? []
+    const note = (opts.note ?? '').trim()
+
     const sorted = [...places].sort((a, b) => Number(a.distance) - Number(b.distance))
-    const themeRule = THEME_INSTRUCTIONS[theme] ?? THEME_INSTRUCTIONS.balanced
+    // 사용자가 뺀 장소는 후보에서 아예 제거
+    const avail = exclude.length ? sorted.filter(p => !exclude.includes(p.name)) : sorted
+
+    const extraRules = [
+        exclude.length ? `- The user removed these places — NEVER include them: ${exclude.join(', ')}.` : '',
+        note ? `- Extra request from the user, treat it as a priority: "${note}".` : '',
+    ].filter(Boolean).join('\n')
+
+    const baseTheme = THEME_INSTRUCTIONS[theme] ?? THEME_INSTRUCTIONS.balanced
+    const themeRule = extraRules ? `${baseTheme}\n${extraRules}` : baseTheme
 
     let systemPrompt: string
     let userContent: string
@@ -84,7 +97,7 @@ ${themeRule}`
 
         userContent = `Location: ${locationName}
 Nearby places:
-${sorted.map(p => `- ${p.name} (${p.category}, ${p.distance}m)`).join('\n')}
+${avail.map(p => `- ${p.name} (${p.category}, ${p.distance}m)`).join('\n')}
 
 Create a single-day course starting at ${startTime}. JSON only.`
 
@@ -108,7 +121,7 @@ ${themeRule}`
 
         userContent = `Location: ${locationName}
 Available places (sorted nearest→farthest — use distance spread to create geographic day variety):
-${sorted.map(p => `- ${p.name} (${p.category}, ${p.distance}m)`).join('\n')}
+${avail.map(p => `- ${p.name} (${p.category}, ${p.distance}m)`).join('\n')}
 
 Create a 1-night 2-day trip. EVERY step needs "day":1 or "day":2. JSON only.`
 
@@ -133,7 +146,7 @@ ${themeRule}`
 
         userContent = `Location: ${locationName}
 Available places (sorted nearest→farthest — use distance spread to ensure geographic variety across 3 days):
-${sorted.map(p => `- ${p.name} (${p.category}, ${p.distance}m)`).join('\n')}
+${avail.map(p => `- ${p.name} (${p.category}, ${p.distance}m)`).join('\n')}
 
 Create a 2-night 3-day trip. EVERY step MUST have "day":1, "day":2, or "day":3. JSON only.`
     }
@@ -144,6 +157,62 @@ Create a 2-night 3-day trip. EVERY step MUST have "day":1, "day":2, or "day":3. 
         body: JSON.stringify({
             model: 'claude-haiku-4-5-20251001',
             max_tokens: maxTokens,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userContent }],
+        }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Claude API 오류');
+    const text = data.content?.[0]?.text || '';
+    return JSON.parse(extractJSON(text));
+}
+
+// Text — 단일 스팟 교체 (나머지 일정은 유지하고 한 곳만 다른 곳으로)
+export async function generateReplacement(
+    locationName: string,
+    places: { name: string; category: string; distance: string | number; lat?: number; lng?: number }[],
+    currentNames: string[],
+    target: { name: string; badge?: string; time?: string },
+    theme = 'balanced',
+) {
+    const used = new Set(currentNames)
+    const sorted = [...places].sort((a, b) => Number(a.distance) - Number(b.distance))
+    // 이미 코스에 포함된 장소는 제외 (교체 대상 자신 포함)
+    const candidates = sorted.filter(p => !used.has(p.name))
+    if (candidates.length === 0) throw new Error('대체할 장소가 없어요')
+
+    const themeRule = THEME_INSTRUCTIONS[theme] ?? THEME_INSTRUCTIONS.balanced
+
+    const systemPrompt = `You are a travel course planner. The user wants to swap ONE spot in an existing course for a different place. Respond with valid JSON only — no other text.
+
+JSON format:
+{"name":"string","desc":"string","badge":"string","tags":["string"],"duration":"string"}
+
+Rules:
+- Pick exactly ONE place from the candidate list that is a good alternative to the spot being replaced.
+- Prefer a place with a similar vibe/category to the replaced spot, located near the area.
+- name: use the EXACT place name from the candidate list. Never invent a name.
+- badge: one of 관광명소/맛집/카페/문화/자연/쇼핑
+- tags: array from [food, view, cafe, culture]
+- desc: 1-2 Korean sentences on why to visit
+- duration: a realistic stay duration like "1시간 30분"
+${themeRule}`
+
+    const userContent = `Location: ${locationName}
+Spot being replaced: ${target.name}${target.badge ? ` (${target.badge})` : ''}${target.time ? ` at ${target.time}` : ''}
+
+Candidate places (nearest→farthest, none are already in the course):
+${candidates.map(p => `- ${p.name} (${p.category}, ${p.distance}m)`).join('\n')}
+
+Pick ONE replacement for "${target.name}". JSON only.`
+
+    const res = await fetch(ANTHROPIC_API_URL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 400,
             system: systemPrompt,
             messages: [{ role: 'user', content: userContent }],
         }),
