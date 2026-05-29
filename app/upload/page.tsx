@@ -252,8 +252,8 @@ export default function UploadPage() {
           <div style={{ padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
             <div style={{
               width: 96, height: 96, borderRadius: 28,
-              background: 'linear-gradient(135deg, rgba(59,126,248,0.1), rgba(91,148,255,0.06))',
-              border: '1.5px solid rgba(59,126,248,0.12)',
+              background: 'linear-gradient(135deg, rgba(25,31,40,0.1), rgba(78,89,104,0.06))',
+              border: '1.5px solid rgba(25,31,40,0.12)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <Icon name="image" size={40} color="var(--blue)" strokeWidth={1.2}/>
@@ -302,8 +302,8 @@ export default function UploadPage() {
               {uploadedFiles.length < MAX_PHOTOS && (
                 <button onClick={() => fileInputRef.current?.click()} style={{
                   aspectRatio: '1', borderRadius: 12,
-                  border: '1.5px dashed rgba(59,126,248,0.3)',
-                  background: 'rgba(59,126,248,0.04)',
+                  border: '1.5px dashed rgba(25,31,40,0.3)',
+                  background: 'rgba(25,31,40,0.04)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                   gap: 4, cursor: 'pointer',
                 }}>
@@ -440,14 +440,14 @@ export default function UploadPage() {
             ) : (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', marginBottom: 16,
-                background: 'linear-gradient(135deg, rgba(59,126,248,0.08), rgba(91,148,255,0.04))',
-                borderRadius: 'var(--r-sm)', border: '1px solid rgba(59,126,248,0.12)',
+                background: 'linear-gradient(135deg, rgba(25,31,40,0.08), rgba(78,89,104,0.04))',
+                borderRadius: 'var(--r-sm)', border: '1px solid rgba(25,31,40,0.12)',
               }}>
                 <div style={{
                   width: 38, height: 38, borderRadius: 12, flexShrink: 0,
                   background: 'linear-gradient(135deg, var(--blue), var(--blue2))',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 4px 12px rgba(59,126,248,0.28)',
+                  boxShadow: '0 4px 12px rgba(25,31,40,0.28)',
                 }}>
                   <Icon name="sparkle" size={18} color="#fff" strokeWidth={1.5}/>
                 </div>
@@ -489,8 +489,8 @@ export default function UploadPage() {
             {/* 선택된 지역 요약 */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', marginBottom: 22,
-              background: 'linear-gradient(135deg, rgba(59,126,248,0.08), rgba(91,148,255,0.04))',
-              borderRadius: 'var(--r-sm)', border: '1px solid rgba(59,126,248,0.12)',
+              background: 'linear-gradient(135deg, rgba(25,31,40,0.08), rgba(78,89,104,0.04))',
+              borderRadius: 'var(--r-sm)', border: '1px solid rgba(25,31,40,0.12)',
             }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, overflow: 'hidden', flexShrink: 0 }}>
                 <PlaceImage name={pendingRegion.name} width={36} height={36}/>
@@ -511,21 +511,21 @@ export default function UploadPage() {
                     width: '100%', padding: '14px 16px',
                     display: 'flex', alignItems: 'center', gap: 14,
                     borderRadius: 'var(--r-sm)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                    background: isSel ? 'linear-gradient(135deg, rgba(59,126,248,0.12), rgba(91,148,255,0.06))' : 'var(--surface)',
-                    border: isSel ? '2px solid rgba(59,126,248,0.5)' : '1.5px solid var(--border-soft)',
-                    boxShadow: isSel ? '0 2px 12px rgba(59,126,248,0.15)' : 'none',
+                    background: isSel ? 'linear-gradient(135deg, rgba(25,31,40,0.12), rgba(78,89,104,0.06))' : 'var(--surface)',
+                    border: isSel ? '2px solid rgba(25,31,40,0.5)' : '1.5px solid var(--border-soft)',
+                    boxShadow: isSel ? '0 2px 12px rgba(25,31,40,0.15)' : 'none',
                     transition: 'all 0.15s',
                     animation: `itemIn 0.25s ${i * 0.06}s ease both`,
                   }}>
                     <div style={{
                       width: 40, height: 40, borderRadius: 12, flexShrink: 0,
                       background: isSel
-                        ? (opt.type === 'day' ? 'rgba(245,158,11,0.15)' : opt.type === '1n2d' ? 'rgba(59,126,248,0.15)' : 'rgba(139,92,246,0.15)')
+                        ? (opt.type === 'day' ? 'rgba(139,146,161,0.15)' : opt.type === '1n2d' ? 'rgba(25,31,40,0.15)' : 'rgba(139,146,161,0.15)')
                         : 'var(--border-hair)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       <Icon name={opt.icon} size={20}
-                        color={isSel ? (opt.type === 'day' ? '#f59e0b' : opt.type === '1n2d' ? 'var(--blue)' : '#8b5cf6') : 'var(--text3)'}
+                        color={isSel ? (opt.type === 'day' ? '#8b95a1' : opt.type === '1n2d' ? 'var(--blue)' : '#8b95a1') : 'var(--text3)'}
                         strokeWidth={1.6}/>
                     </div>
                     <div style={{ flex: 1 }}>
@@ -557,7 +557,7 @@ export default function UploadPage() {
                     background: isSel ? 'var(--blue)' : 'var(--surface)',
                     color: isSel ? '#fff' : 'var(--text2)',
                     border: isSel ? 'none' : '1.5px solid var(--border-soft)',
-                    boxShadow: isSel ? '0 2px 10px rgba(59,126,248,0.25)' : 'none',
+                    boxShadow: isSel ? '0 2px 10px rgba(25,31,40,0.25)' : 'none',
                     transition: 'all 0.15s',
                   }}>
                     {opt.emoji} {opt.label}
@@ -580,7 +580,7 @@ export default function UploadPage() {
                     background: isSel ? 'var(--blue)' : 'var(--surface)',
                     color: isSel ? '#fff' : 'var(--text2)',
                     border: isSel ? 'none' : '1.5px solid var(--border-soft)',
-                    boxShadow: isSel ? '0 2px 10px rgba(59,126,248,0.25)' : 'none',
+                    boxShadow: isSel ? '0 2px 10px rgba(25,31,40,0.25)' : 'none',
                     transition: 'all 0.15s',
                   }}>
                     {t}
@@ -613,8 +613,8 @@ function PhotoStatusCell({ file, status }: { file: File; status: 'gps' | 'ai' | 
   }, [file])
   if (!url) return <div style={{ width: 72, height: 72, flexShrink: 0, borderRadius: 12, background: 'var(--blue4)' }}/>
   const badge =
-    status === 'gps' ? { label: 'GPS', bg: 'rgba(59,126,248,0.9)' } :
-    status === 'ai'  ? { label: 'AI',  bg: 'rgba(16,185,129,0.88)' } :
+    status === 'gps' ? { label: 'GPS', bg: 'rgba(25,31,40,0.9)' } :
+    status === 'ai'  ? { label: 'AI',  bg: 'rgba(25,31,40,0.88)' } :
                        { label: '?',   bg: 'rgba(148,163,184,0.85)' }
   return (
     <div style={{ width: 72, height: 72, flexShrink: 0, borderRadius: 12, overflow: 'hidden', position: 'relative' }}>

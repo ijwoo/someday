@@ -12,7 +12,7 @@ import type { TripType, Theme, Course, CourseStep, RegenInfo } from '@/types'
 
 const TAG = { food:'맛집', view:'뷰맛집', cafe:'카페', culture:'문화' }
 const TAG_COLOR = { food:'chip-rose', view:'chip-blue', cafe:'chip-amber', culture:'chip-teal' }
-const DAY_COLORS: Record<number, string> = { 1:'#3b7ef8', 2:'#10b981', 3:'#f59e0b' }
+const DAY_COLORS: Record<number, string> = { 1:'#191f28', 2:'#4e5968', 3:'#8b95a1' }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371
@@ -222,7 +222,7 @@ export default function PlanPage() {
         <canvas ref={heroCv} width={390} height={290} style={{ width:'100%', height:'100%', display:'block' }}/>
         <div style={{
           position:'absolute', inset:0,
-          background:'linear-gradient(to bottom, rgba(10,20,60,0.08) 0%, rgba(10,20,60,0.82) 100%)',
+          background:'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.82) 100%)',
           display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'20px 22px',
         }}>
           <button className="icon-btn" onClick={() => {
@@ -245,7 +245,7 @@ export default function PlanPage() {
 
           <div style={{
             display:'inline-flex', alignItems:'center', gap:5,
-            background:'rgba(59,126,248,0.82)', color:'#fff',
+            background:'rgba(25,31,40,0.82)', color:'#fff',
             fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20,
             marginBottom:10, width:'fit-content', letterSpacing:0.1,
           }}>
@@ -254,8 +254,7 @@ export default function PlanPage() {
           </div>
 
           <h1 style={{
-            fontFamily:'var(--font-dm-serif), serif',
-            fontSize:24, color:'#fff', marginBottom:12, lineHeight:1.2, letterSpacing:-0.4,
+            fontSize:24, fontWeight:800, color:'#fff', marginBottom:12, lineHeight:1.3, letterSpacing:-0.6,
             textShadow:'0 2px 12px rgba(0,0,0,0.2)',
           }}>{course.title || `${region.name} 여행 코스`}</h1>
 
@@ -308,7 +307,7 @@ export default function PlanPage() {
           flexShrink:0, marginLeft:'auto', display:'flex', alignItems:'center', gap:6,
           padding:'7px 14px', borderRadius:20,
           fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
-          background:'rgba(59,126,248,0.08)', border:'none', color:'var(--blue)',
+          background:'rgba(25,31,40,0.08)', border:'none', color:'var(--blue)',
         }}>
           <Icon name="navigation" size={13} color="var(--blue)" strokeWidth={2}/>
           지도
@@ -582,9 +581,9 @@ function TLItem({ item, idx, last, visited, isAnchor, onToggleVisit, onMore, day
           onClick={onToggleVisit}
           style={{
             width:24, height:24, borderRadius:'50%', flexShrink:0, cursor:'pointer',
-            background: visited ? '#10b981' : dayColor,
+            background: visited ? '#191f28' : dayColor,
             border: 'none',
-            boxShadow: visited ? '0 0 0 3px rgba(16,185,129,0.2)' : `0 0 0 3px ${dayColor}30`,
+            boxShadow: visited ? '0 0 0 3px rgba(25,31,40,0.2)' : `0 0 0 3px ${dayColor}30`,
             display:'flex', alignItems:'center', justifyContent:'center',
             transition:'all 0.2s',
           }}
@@ -603,8 +602,8 @@ function TLItem({ item, idx, last, visited, isAnchor, onToggleVisit, onMore, day
           className="glass"
           style={{
             borderRadius:18, overflow:'hidden', cursor:'pointer', transition:'transform 0.12s',
-            border: isAnchor ? '1.5px solid rgba(59,126,248,0.55)' : undefined,
-            boxShadow: isAnchor ? '0 4px 18px rgba(59,126,248,0.18)' : undefined,
+            border: isAnchor ? '1.5px solid rgba(25,31,40,0.55)' : undefined,
+            boxShadow: isAnchor ? '0 4px 18px rgba(25,31,40,0.18)' : undefined,
           }}
           onClick={openKakaoMap}
           onTouchStart={e => (e.currentTarget.style.transform='scale(0.98)')}
@@ -612,7 +611,7 @@ function TLItem({ item, idx, last, visited, isAnchor, onToggleVisit, onMore, day
         >
           <div style={{ height:100, position:'relative', overflow:'hidden' }}>
             <PlaceImage name={item.name} badge={badge} width={320} height={100}/>
-            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 35%, rgba(10,20,60,0.55))' }}/>
+            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.55))' }}/>
             <span style={{
               position:'absolute', top:9, left:10,
               background:'rgba(255,255,255,0.2)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
@@ -644,9 +643,9 @@ function TLItem({ item, idx, last, visited, isAnchor, onToggleVisit, onMore, day
             {isAnchor && (
               <div style={{
                 display:'inline-flex', alignItems:'center', gap:4, marginBottom:6,
-                background:'linear-gradient(135deg, rgba(59,126,248,0.14), rgba(91,148,255,0.08))',
+                background:'linear-gradient(135deg, rgba(25,31,40,0.14), rgba(78,89,104,0.08))',
                 color:'var(--blue)', fontSize:10, fontWeight:700, padding:'3px 9px', borderRadius:8,
-                border:'1px solid rgba(59,126,248,0.2)', letterSpacing:-0.1,
+                border:'1px solid rgba(25,31,40,0.2)', letterSpacing:-0.1,
               }}>
                 📷 사진 속 그곳
               </div>
@@ -724,7 +723,7 @@ function MapView({ course, region, onBack }: { course:Course; region:{name:strin
       const idx = course.steps.indexOf(step)
       const isSel = idx === sel
       const dayNum = step.day ?? 1
-      const color = DAY_COLORS[dayNum] ?? '#3b7ef8'
+      const color = DAY_COLORS[dayNum] ?? '#191f28'
       const content = `<div style="
         background:${isSel ? color : '#fff'};
         color:${isSel ? '#fff' : '#0d1b39'};
@@ -790,7 +789,7 @@ function MapView({ course, region, onBack }: { course:Course; region:{name:strin
           position:'absolute', bottom:0, left:0, right:0,
           background:'var(--sheet)', backdropFilter:'blur(28px) saturate(200%)', WebkitBackdropFilter:'blur(28px) saturate(200%)',
           border:'1px solid var(--glass-border)', borderBottom:'none',
-          borderRadius:'24px 24px 0 0', boxShadow:'0 -4px 24px rgba(59,126,248,0.10)',
+          borderRadius:'24px 24px 0 0', boxShadow:'0 -4px 24px rgba(25,31,40,0.10)',
           padding:'14px 18px', paddingBottom:'max(18px, env(safe-area-inset-bottom))', zIndex:10,
         }}>
           <div style={{ width:36, height:4, borderRadius:2, background:'var(--border-hair)', margin:'0 auto 14px' }}/>
@@ -834,7 +833,7 @@ function ShareView({ course, region, tripLabel, onBack }: { course:Course; regio
         <PlaceImage name={region.name} width={390} height={230}/>
         <div style={{
           position:'absolute', inset:0,
-          background:'linear-gradient(to bottom, rgba(10,20,60,0.15), rgba(10,20,60,0.85))',
+          background:'linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.85))',
           display:'flex', flexDirection:'column', justifyContent:'flex-end', padding:'18px 22px',
         }}>
           <button className="icon-btn" onClick={onBack} style={{
@@ -844,7 +843,7 @@ function ShareView({ course, region, tripLabel, onBack }: { course:Course; regio
             <Icon name="x" size={18} color="#fff" strokeWidth={2}/>
           </button>
           <p style={{ fontSize:11, color:'rgba(255,255,255,0.6)', marginBottom:4 }}>내가 만든 코스</p>
-          <h2 style={{ fontFamily:'var(--font-dm-serif), serif', fontSize:22, color:'#fff', marginBottom:10, letterSpacing:-0.4 }}>
+          <h2 style={{ fontSize:22, fontWeight:800, color:'#fff', marginBottom:10, letterSpacing:-0.6 }}>
             {course.title}
           </h2>
           <div style={{ display:'flex', gap:6 }}>
