@@ -6,6 +6,7 @@
 
 /* ── Design Tokens ── */
 :root {
+  color-scheme: light;
   --bg: #f2f5ff;
   --bg2: #ffffff;
   --blue: #3b7ef8;
@@ -23,6 +24,91 @@
   --r: 20px;
   --r-sm: 14px;
   --r-xs: 10px;
+
+  /* Semantic surfaces (theme-aware) */
+  --surface: rgba(255, 255, 255, 0.7);
+  --surface-soft: rgba(255, 255, 255, 0.55);
+  --sheet: rgba(255, 255, 255, 0.94);
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.9);
+  --glass-subtle-bg: rgba(255, 255, 255, 0.55);
+  --glass-subtle-border: rgba(255, 255, 255, 0.75);
+  --btn-secondary-bg: rgba(255, 255, 255, 0.82);
+  --btn-secondary-border: rgba(255, 255, 255, 0.95);
+  --border-soft: rgba(200, 215, 255, 0.5);
+  --border-hair: rgba(200, 215, 255, 0.25);
+  --dash: rgba(59, 126, 248, 0.18);
+  --overlay-bg: rgba(242, 245, 255, 0.88);
+  --cta-dark: #0d1b39;
+  --skeleton-base: rgba(59, 126, 248, 0.08);
+  --skeleton-hi: rgba(59, 126, 248, 0.16);
+}
+
+/* ── Dark theme ──
+   Applied when the OS prefers dark (and the user hasn't forced light),
+   or when the user explicitly selects dark via the in-app toggle. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0b1222;
+    --bg2: #131c30;
+    --blue3: #24314f;
+    --blue4: #161f33;
+    --text: #eef2ff;
+    --text2: #b3bedb;
+    --text3: #76829f;
+    --sh: 0 2px 20px rgba(0, 0, 0, 0.45);
+    --sh-sm: 0 1px 10px rgba(0, 0, 0, 0.4);
+    --sh-lg: 0 8px 40px rgba(0, 0, 0, 0.55);
+    --sh-up: 0 -2px 20px rgba(0, 0, 0, 0.4);
+    --surface: rgba(40, 52, 82, 0.72);
+    --surface-soft: rgba(40, 52, 82, 0.45);
+    --sheet: rgba(20, 28, 46, 0.94);
+    --glass-bg: rgba(26, 35, 58, 0.72);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-subtle-bg: rgba(26, 35, 58, 0.5);
+    --glass-subtle-border: rgba(255, 255, 255, 0.06);
+    --btn-secondary-bg: rgba(36, 48, 76, 0.85);
+    --btn-secondary-border: rgba(255, 255, 255, 0.08);
+    --border-soft: rgba(120, 140, 200, 0.22);
+    --border-hair: rgba(120, 140, 200, 0.16);
+    --dash: rgba(91, 148, 255, 0.3);
+    --overlay-bg: rgba(11, 18, 34, 0.9);
+    --cta-dark: #1b2741;
+    --skeleton-base: rgba(120, 140, 200, 0.1);
+    --skeleton-hi: rgba(120, 140, 200, 0.2);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1222;
+  --bg2: #131c30;
+  --blue3: #24314f;
+  --blue4: #161f33;
+  --text: #eef2ff;
+  --text2: #b3bedb;
+  --text3: #76829f;
+  --sh: 0 2px 20px rgba(0, 0, 0, 0.45);
+  --sh-sm: 0 1px 10px rgba(0, 0, 0, 0.4);
+  --sh-lg: 0 8px 40px rgba(0, 0, 0, 0.55);
+  --sh-up: 0 -2px 20px rgba(0, 0, 0, 0.4);
+  --surface: rgba(40, 52, 82, 0.72);
+  --surface-soft: rgba(40, 52, 82, 0.45);
+  --sheet: rgba(20, 28, 46, 0.94);
+  --glass-bg: rgba(26, 35, 58, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-subtle-bg: rgba(26, 35, 58, 0.5);
+  --glass-subtle-border: rgba(255, 255, 255, 0.06);
+  --btn-secondary-bg: rgba(36, 48, 76, 0.85);
+  --btn-secondary-border: rgba(255, 255, 255, 0.08);
+  --border-soft: rgba(120, 140, 200, 0.22);
+  --border-hair: rgba(120, 140, 200, 0.16);
+  --dash: rgba(91, 148, 255, 0.3);
+  --overlay-bg: rgba(11, 18, 34, 0.9);
+  --cta-dark: #1b2741;
+  --skeleton-base: rgba(120, 140, 200, 0.1);
+  --skeleton-hi: rgba(120, 140, 200, 0.2);
 }
 
 /* ── Reset ── */
@@ -40,6 +126,7 @@ body {
   background: var(--bg);
   color: var(--text);
   overscroll-behavior: none;
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
 
 /* ── Scrollable ── */
@@ -61,18 +148,18 @@ body {
 
 /* ── Glass cards ── */
 .glass {
-  background: rgba(255, 255, 255, 0.78);
+  background: var(--glass-bg);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--sh);
 }
 
 .glass-subtle {
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--glass-subtle-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--glass-subtle-border);
 }
 
 .glass-dark {
@@ -107,10 +194,10 @@ body {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.82);
+  background: var(--btn-secondary-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--btn-secondary-border);
   color: var(--text);
   box-shadow: var(--sh-sm);
 }
@@ -131,10 +218,10 @@ body {
   justify-content: center;
   cursor: pointer;
   border: none;
-  background: rgba(255, 255, 255, 0.82);
+  background: var(--btn-secondary-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--sh-sm);
   transition: transform 0.12s, opacity 0.12s;
   flex-shrink: 0;
@@ -206,4 +293,30 @@ body {
 @keyframes itemIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Skeleton loader ── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-hi) 37%,
+    var(--skeleton-base) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

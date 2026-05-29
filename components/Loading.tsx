@@ -17,7 +17,7 @@ export default function Loading({
     <div style={{
       position: 'fixed',
       inset: 0,
-      background: 'rgba(242, 245, 255, 0.88)',
+      background: 'var(--overlay-bg)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
       zIndex: 999,
