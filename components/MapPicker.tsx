@@ -99,7 +99,7 @@ export default function MapPicker({ onConfirm, onClose }: Props) {
         {/* 안내 (선택 전) */}
         {ready && !picked && (
           <div style={{
-            position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)',
+            position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 30,
             background: 'var(--cta-dark)', color: '#fff',
             fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: 999,
             display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
@@ -111,7 +111,7 @@ export default function MapPicker({ onConfirm, onClose }: Props) {
 
         {/* 선택 결과 시트 */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
+          position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 30,
           background: 'var(--sheet)', borderTop: '1px solid var(--border-soft)',
           borderRadius: '20px 20px 0 0',
           padding: '16px 20px', paddingBottom: 'max(20px, env(safe-area-inset-bottom))',

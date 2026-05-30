@@ -9,12 +9,12 @@
   color-scheme: light;
   --bg: #ffffff;
   --bg2: #f9fafb;
-  /* 블랙&화이트 톤 — 액센트(=브랜드/주요 액션)는 near-black */
-  --blue: #191f28;
-  --blue2: #333d4b;
-  --blue3: #d1d6db;
-  --blue4: #f2f4f6;
-  --blue-dark: #000000;
+  /* 라이트: 파랑+검정 — 액센트는 토스 블루, 텍스트/CTA는 검정 */
+  --blue: #3182f6;
+  --blue2: #4593fc;
+  --blue3: #c9deff;
+  --blue4: #eaf2ff;
+  --blue-dark: #1b64da;
   --on-accent: #ffffff;
   --text: #191f28;
   --text2: #4e5968;
