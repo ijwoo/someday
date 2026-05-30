@@ -45,17 +45,33 @@ export async function POST(req: NextRequest) {
         const course = await generateCourse(locationName, pool, tripType, theme, startTime, { exclude, note, anchor: anchorName });
 
         // Kakao places 데이터로 각 step에 lat/lng 좌표 보강
+        // — AI가 돌려준 이름이 후보와 정확히 안 맞아도(띄어쓰기/지점명 차이)
+        //   정규화·부분일치로 최대한 실제 좌표를 찾아 붙인다.
+        //   (실패 시 중심좌표로 떨어지면 스텝 간 거리가 0 → 전부 '차로 5분'이 됨)
         if (course.steps) {
-            const placeMap = new Map<string, { lat: number; lng: number }>();
-            for (const p of pool) {
-                if (p.name && p.lat != null && p.lng != null) {
-                    placeMap.set(p.name, { lat: p.lat, lng: p.lng });
-                }
-            }
+            const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase();
+            const coordsOf = (name: string): { lat: number; lng: number } | null => {
+                if (!name) return null;
+                const t = norm(name);
+                // 1) 완전 일치 → 2) 공백무시 일치 → 3) 부분 포함(양방향)
+                const exact = pool.find(p => p.name === name);
+                const normed = exact || pool.find(p => norm(p.name) === t);
+                const part = normed || pool.find(p => {
+                    const pn = norm(p.name);
+                    return pn.length >= 2 && t.length >= 2 && (pn.includes(t) || t.includes(pn));
+                });
+                return part && part.lat != null && part.lng != null
+                    ? { lat: part.lat, lng: part.lng }
+                    : null;
+            };
+
+            let unmatched = 0;
             course.steps = course.steps.map((step: any) => {
-                const coords = placeMap.get(step.name);
+                const coords = coordsOf(step.name);
+                if (!coords) unmatched++;
                 return coords ? { ...step, ...coords } : { ...step, lat, lng };
             });
+            if (unmatched) console.warn(`[course] 좌표 매칭 실패 ${unmatched}/${course.steps.length} — 중심좌표 폴백`);
         }
 
         if (anchorName) course.anchor = anchorName;
