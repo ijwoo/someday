@@ -33,6 +33,17 @@ export async function fetchPlaces(lat: number, lng: number, tripType = 'day') {
     return res.json();
 }
 
+// 좌표 → 지역명 (지도에서 직접 위치를 찍을 때)
+export async function reverseLookup(lat: number, lng: number) {
+    const res = await fetch('/api/reverse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat, lng }),
+    });
+    if (!res.ok) throw new Error((await res.json()).error);
+    return res.json() as Promise<{ locationName: string; rawAddress: string }>;
+}
+
 export async function createCourse(
     locationName: string,
     lat: number,
