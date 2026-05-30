@@ -89,11 +89,12 @@ export async function generateCourse(
         systemPrompt = `You are a travel course planner. Respond with valid JSON only — no other text.
 
 JSON format:
-{"title":"string","theme":"string","totalTime":"약 6~8시간","steps":[{"order":1,"name":"string","time":"HH:MM","duration":"string","desc":"string","badge":"string","tags":["string"]}]}
+{"title":"string","theme":"string","totalTime":"약 8~10시간","steps":[{"order":1,"name":"string","time":"HH:MM","duration":"string","desc":"string","badge":"string","tags":["string"]}]}
 
 Rules:
-- Pick 4-6 places for a single-day course ordered by logical visit flow
+- Pick 5-6 places for a single-day course ordered by logical visit flow
 - First spot starts at ${startTime}. Schedule subsequent spots realistically.
+- MEALS (required): include a LUNCH spot (badge 맛집) around 12:00–13:00 AND a DINNER spot (badge 맛집) around 18:00–19:30. The day must run into the evening — never end before dinner.
 - title: evocative Korean title including location name
 - badge: one of 관광명소/맛집/카페/문화/자연/쇼핑
 - tags: array from [food, view, cafe, culture]
@@ -116,8 +117,9 @@ JSON format:
 
 CRITICAL RULES:
 1. Every step MUST have "day": 1 or 2 (integer). Never omit.
-2. Day 1: 3-4 spots starting at ${startTime} (afternoon arrival feel). Day 2: 3-4 spots starting at 09:00.
+2. Day 1: 4 spots starting at ${startTime} (afternoon arrival feel). Day 2: 4 spots starting at 09:00.
 3. Cover the WHOLE region, not one neighborhood. Treat this as a trip across the entire city/region (${locationName} and beyond), spanning multiple districts. Day 1 explores one district/area, Day 2 a clearly DIFFERENT district. Favor the region's iconic must-see spots even if farther — use the distance spread in the list.
+3b. MEALS (required): Day 1 MUST include a DINNER (저녁, badge 맛집) around 18:00–19:30. Day 2 MUST include a LUNCH (badge 맛집) around 12:00–13:00 AND a DINNER around 18:00–19:00. Place meals at proper meal times; never skip dinner.
 4. Total 6-8 spots. "order" is continuous across days (1,2,3...).
 5. badge: one of 관광명소/맛집/카페/문화/자연/쇼핑
 7. tags: array from [food, view, cafe, culture]
@@ -142,6 +144,7 @@ CRITICAL RULES:
 1. Every step MUST have "day": 1, 2, or 3 (integer). NEVER omit the day field.
 2. Distribution: Day 1 = 3-4 spots (arrival + evening), Day 2 = 4-5 spots (full day), Day 3 = 3-4 spots (morning + departure).
 3. COVER THE WHOLE REGION across 3 days — this is a trip through the entire city/region (${locationName} and beyond), NOT one neighborhood. Each day explores a DIFFERENT district/zone. Prioritize the region's signature must-see landmarks even when they are far apart, using the distance spread to assign closer places to Day 1/3 and the farther iconic spots to Day 2.
+3b. MEALS (required) at proper meal times — Day 1: a DINNER (~18:00–19:30). Day 2: a LUNCH (~12:00–13:00) AND a DINNER (~18:00–19:30). Day 3: a LUNCH (~12:00–13:00). Meal spots use badge 맛집 (a café stop may use 카페). Never skip dinner on Day 1 or Day 2.
 4. Total 10-13 spots. "order" is continuous (1,2,3...) across all days.
 5. Time: Day 1 starts at ${startTime}, Day 2 starts 09:00, Day 3 starts 09:00.
 6. badge: one of 관광명소/맛집/카페/문화/자연/쇼핑
