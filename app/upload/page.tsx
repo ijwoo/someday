@@ -6,6 +6,7 @@ import Loading from '@/components/Loading'
 import Toast, { showToast } from '@/components/Toast'
 import Icon from '@/components/Icon'
 import BottomNav from '@/components/BottomNav'
+import MapPicker from '@/components/MapPicker'
 import { extractGPS } from '@/lib/exif'
 import { analyzePhoto, fetchPlaces, createCourse } from '@/lib/api'
 import type { TripType, Theme } from '@/types'
@@ -65,6 +66,7 @@ export default function UploadPage() {
   const [photoResults, setPhotoResults] = useState<PhotoResult[]>([])
   const [detectedRegions, setDetectedRegions] = useState<Region[]>([])
   const [pendingRegion, setPendingRegion] = useState<Region | null>(null)
+  const [showMap, setShowMap] = useState(false)
   // duration step options
   const [selectedType, setSelectedType] = useState<TripType>('day')
   const [theme, setTheme] = useState<Theme>('balanced')
@@ -159,6 +161,13 @@ export default function UploadPage() {
 
   function selectRegion(r: Region) {
     setPendingRegion(r)
+    setStep('duration')
+  }
+
+  function confirmMapPick(lat: number, lng: number, name: string) {
+    setIsManual(true)
+    setPendingRegion({ name, lat, lng, ti: 0 })
+    setShowMap(false)
     setStep('duration')
   }
 
@@ -276,9 +285,13 @@ export default function UploadPage() {
               <div style={{ flex: 1, height: 1, background: 'var(--blue3)' }}/>
             </div>
             <button className="btn btn-secondary" style={{ width: '100%' }}
-              onClick={() => { setIsManual(true); setDetectedRegions(POPULAR_REGIONS); setStep('analyzed') }}>
-              <Icon name="pin" size={16} color="var(--text)" strokeWidth={1.8}/>
-              지역 직접 선택하기
+              onClick={() => setShowMap(true)}>
+              <Icon name="map" size={16} color="var(--text)" strokeWidth={1.8}/>
+              지도에서 위치 선택
+            </button>
+            <button onClick={() => { setIsManual(true); setDetectedRegions(POPULAR_REGIONS); setStep('analyzed') }}
+              style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+              인기 여행지에서 고르기
             </button>
           </div>
         )}
@@ -390,9 +403,9 @@ export default function UploadPage() {
                   ))}
                 </div>
                 <button className="btn btn-secondary" style={{ width: '100%' }}
-                  onClick={() => { setIsManual(true); setDetectedRegions(POPULAR_REGIONS) }}>
-                  <Icon name="pin" size={16} color="var(--text)" strokeWidth={1.8}/>
-                  다른 지역 직접 선택하기
+                  onClick={() => setShowMap(true)}>
+                  <Icon name="map" size={16} color="var(--text)" strokeWidth={1.8}/>
+                  지도에서 직접 선택
                 </button>
               </>
             ) : (
@@ -456,6 +469,13 @@ export default function UploadPage() {
                   <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 1 }}>코스를 만들 지역을 선택하세요</div>
                 </div>
               </div>
+            )}
+            {isManual && (
+              <button className="btn btn-secondary" style={{ width: '100%', marginBottom: 12 }}
+                onClick={() => setShowMap(true)}>
+                <Icon name="map" size={16} color="var(--text)" strokeWidth={1.8}/>
+                지도에서 직접 선택
+              </button>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {detectedRegions.map((r, i) => (
@@ -596,6 +616,10 @@ export default function UploadPage() {
           </div>
         )}
       </div>
+
+      {showMap && (
+        <MapPicker onClose={() => setShowMap(false)} onConfirm={confirmMapPick}/>
+      )}
 
       <Loading visible={loading} title={loadTitle} subtitle={loadSub}/>
       <Toast/>
