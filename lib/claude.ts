@@ -126,10 +126,10 @@ CRITICAL RULES:
 ${themeRule}`
 
         userContent = `Location: ${locationName}
-Available places (sorted nearest→farthest — use distance spread to create geographic day variety):
+Available places (the region's top/most-representative spots first; the number is distance in meters from the start point — use it to group spots by area per day):
 ${avail.map(p => `- ${p.name} (${p.category}, ${p.distance}m)`).join('\n')}
 
-Create a 1-night 2-day trip. EVERY step needs "day":1 or "day":2. JSON only.`
+Create a 1-night 2-day trip that covers the region's signature spots across two different areas. EVERY step needs "day":1 or "day":2. JSON only.`
 
     } else {
         maxTokens = 3500
@@ -151,10 +151,10 @@ CRITICAL RULES:
 ${themeRule}`
 
         userContent = `Location: ${locationName}
-Available places (sorted nearest→farthest — use distance spread to ensure geographic variety across 3 days):
+Available places (the region's top/most-representative spots first; the number is distance in meters from the start point — use it to group spots by area per day):
 ${avail.map(p => `- ${p.name} (${p.category}, ${p.distance}m)`).join('\n')}
 
-Create a 2-night 3-day trip. EVERY step MUST have "day":1, "day":2, or "day":3. JSON only.`
+Create a 2-night 3-day trip that journeys across the whole region — its signature must-see spots spread over three different areas/districts. EVERY step MUST have "day":1, "day":2, or "day":3. JSON only.`
     }
 
     const res = await fetch(ANTHROPIC_API_URL, {

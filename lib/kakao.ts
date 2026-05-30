@@ -173,13 +173,15 @@ async function searchByCategory(
     const data = await res.json();
     return (data.documents || [])
         .filter((d: any) => !isExcluded(d.place_name))
-        .map((d: any) => ({
+        .map((d: any, i: number) => ({
             name: d.place_name,
             address: d.road_address_name || d.address_name,
             category: label,
             lat: parseFloat(d.y),
             lng: parseFloat(d.x),
             distance: parseInt(d.distance, 10),
+            rank: i,        // 검색 정확도/인기 순서
+            wide: false,    // 반경 기반(근처) 결과
         }));
 }
 
@@ -197,13 +199,15 @@ async function searchByKeyword(
     const data = await res.json();
     return (data.documents || [])
         .filter((d: any) => !isExcluded(d.place_name))
-        .map((d: any) => ({
+        .map((d: any, i: number) => ({
             name: d.place_name,
             address: d.road_address_name || d.address_name,
             category: label,
             lat: parseFloat(d.y),
             lng: parseFloat(d.x),
             distance: parseInt(d.distance, 10),
+            rank: i,        // 검색 정확도/인기 순서
+            wide: false,    // 반경 기반(근처) 결과
         }));
 }
 
@@ -227,7 +231,7 @@ async function searchRegional(
     const [d1, d2] = await Promise.all([r1.json(), r2.json()])
     return [...(d1.documents || []), ...(d2.documents || [])]
         .filter((d: any) => !isExcluded(d.place_name))
-        .map((d: any) => {
+        .map((d: any, i: number) => {
             const pLat = parseFloat(d.y)
             const pLng = parseFloat(d.x)
             return {
@@ -238,6 +242,8 @@ async function searchRegional(
                 lng: pLng,
                 // 실제 거리 계산 (Haversine)
                 distance: Math.round(haversine(baseLat, baseLng, pLat, pLng)),
+                rank: i,       // 지역 내 인기/대표성 순서
+                wide: true,    // 광역(도시 전역) 결과
             }
         })
 }
@@ -286,9 +292,10 @@ export async function searchNearby(
             searchRegional(`${region} 카페`, '카페', lat, lng),
             searchRegional(`${region} 자연 명소`, '자연', lat, lng),
         ])
+        // 광역(인기) 결과를 앞에 둬서 중복 제거 시 대표 명소 버전이 살아남게 한다
         all = [
+            ...wideAttractions, ...wideMustSee, ...wideNature, ...wideFood, ...wideCafe,
             ...nearLandmarks, ...nearCulture, ...nearFood, ...nearCafe,
-            ...wideAttractions, ...wideMustSee, ...wideFood, ...wideCafe, ...wideNature,
         ]
     }
 
@@ -300,7 +307,15 @@ export async function searchNearby(
         return true
     })
 
-    // 카테고리별로 가까운 순 정렬 후 상한 적용 (과다 카테고리 정리)
+    // 카테고리별 상한 적용
+    // - 당일치기: 가까운 순(걸어서/짧은 이동)
+    // - 숙박 여행: 도시 인기/대표성 순(광역 결과 우선) — 멀어도 해운대·광안리 등 명소 확보
+    const overnight = tripType !== 'day'
+    const popScore = (p: any) => (p.wide ? 0 : 1000) + (p.rank ?? 999)
+    const order = overnight
+        ? (a: any, b: any) => popScore(a) - popScore(b) || a.distance - b.distance
+        : (a: any, b: any) => a.distance - b.distance
+
     const byCat = new Map<string, any[]>()
     for (const p of dedup) {
         const arr = byCat.get(p.category) ?? []
@@ -309,14 +324,14 @@ export async function searchNearby(
     }
     const capped: any[] = []
     for (const [cat, arr] of byCat) {
-        arr.sort((a, b) => a.distance - b.distance)
+        arr.sort(order)
         capped.push(...arr.slice(0, CATEGORY_CAP[cat] ?? 10))
     }
 
-    // 명소·자연·문화 우선, 그다음 거리순 → 상위 후보만 AI에 전달
+    // 명소·자연·문화 우선, 그다음 (숙박=인기순 / 당일=거리순) → 상위 후보만 AI에 전달
     capped.sort((a, b) =>
         (CATEGORY_WEIGHT[b.category] ?? 1) - (CATEGORY_WEIGHT[a.category] ?? 1)
-        || a.distance - b.distance,
+        || order(a, b),
     )
     return capped.slice(0, MAX_CANDIDATES_BY_TRIP[tripType] ?? 34)
 }
