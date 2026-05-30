@@ -16,7 +16,7 @@ function extractJSON(text: string): string {
 }
 
 // 모든 코스/교체 프롬프트에 공통으로 들어가는 품질 가이드
-const QUALITY_RULE = '- Build a real trip, not a list of nearby shops. Favor iconic, representative, travel-worthy spots (landmarks, scenic spots, signature local eateries, distinctive cafes). Avoid generic chains, cinemas, marts, and everyday errands. If candidates are weak, still pick the most trip-worthy ones and write descriptions that frame them as part of a journey.'
+const QUALITY_RULE = "- Build a real trip, not a list of nearby shops. Favor iconic, representative, travel-worthy spots (landmarks, scenic spots, signature local eateries, distinctive cafes) AND the region's genuinely famous local restaurants/foods. Avoid generic chains, cinemas, marts, and everyday errands. You MAY include a few of the region's well-known signature spots and famous local eateries by their exact real Korean name even if they are not in the candidate list — but ONLY real, genuinely well-known places (no invented names). Prefer the candidate list for everything else."
 
 const THEME_INSTRUCTIONS: Record<string, string> = {
     balanced: '- Balance all categories: mix sightseeing, food, cafe, and culture spots evenly.',
@@ -98,7 +98,7 @@ Rules:
 - badge: one of 관광명소/맛집/카페/문화/자연/쇼핑
 - tags: array from [food, view, cafe, culture]
 - desc: 1-2 Korean sentences on why to visit
-- name: use exact place name from the list
+- name: exact place name — prefer the candidate list; for the region's famous spots/restaurants not listed, use their exact real Korean name
 ${themeRule}`
 
         userContent = `Location: ${locationName}
@@ -122,7 +122,7 @@ CRITICAL RULES:
 5. badge: one of 관광명소/맛집/카페/문화/자연/쇼핑
 7. tags: array from [food, view, cafe, culture]
 8. desc: 1-2 Korean sentences
-9. name: exact place name from list
+9. name: exact place name — prefer the list; for famous local spots/restaurants not listed, use their exact real Korean name
 ${themeRule}`
 
         userContent = `Location: ${locationName}
@@ -147,7 +147,7 @@ CRITICAL RULES:
 6. badge: one of 관광명소/맛집/카페/문화/자연/쇼핑
 8. tags: array from [food, view, cafe, culture]
 9. desc: 1-2 Korean sentences
-10. name: exact place name from list
+10. name: exact place name — prefer the list; for famous local spots/restaurants not listed, use their exact real Korean name
 ${themeRule}`
 
         userContent = `Location: ${locationName}

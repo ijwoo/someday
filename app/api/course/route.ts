@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCourse } from '@/lib/claude';
-import { findAnchor } from '@/lib/kakao';
+import { findAnchor, geocodeNamed } from '@/lib/kakao';
 import { getCached, setCached, coordKey } from '@/lib/cache';
 
 export async function POST(req: NextRequest) {
@@ -44,34 +44,40 @@ export async function POST(req: NextRequest) {
 
         const course = await generateCourse(locationName, pool, tripType, theme, startTime, { exclude, note, anchor: anchorName });
 
-        // Kakao places 데이터로 각 step에 lat/lng 좌표 보강
-        // — AI가 돌려준 이름이 후보와 정확히 안 맞아도(띄어쓰기/지점명 차이)
-        //   정규화·부분일치로 최대한 실제 좌표를 찾아 붙인다.
-        //   (실패 시 중심좌표로 떨어지면 스텝 간 거리가 0 → 전부 '차로 5분'이 됨)
+        // 각 step에 lat/lng 좌표 보강
+        // 1차: 후보 풀에서 정규화·부분일치로 매칭
+        // 2차: 후보 밖 유명 장소(AI가 이름으로 넣은 맛집/명소)는 Kakao 지오코딩
+        // (실패 시 중심좌표 폴백 — 거리 0이면 '차로 5분'으로 표시됨)
         if (course.steps) {
-            const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase();
-            const coordsOf = (name: string): { lat: number; lng: number } | null => {
+            const norm = (s: string) => (s || '').replace(/\s+/g, '').toLowerCase();
+            const matchPool = (name: string): { lat: number; lng: number } | null => {
                 if (!name) return null;
                 const t = norm(name);
-                // 1) 완전 일치 → 2) 공백무시 일치 → 3) 부분 포함(양방향)
-                const exact = pool.find(p => p.name === name);
-                const normed = exact || pool.find(p => norm(p.name) === t);
-                const part = normed || pool.find(p => {
-                    const pn = norm(p.name);
-                    return pn.length >= 2 && t.length >= 2 && (pn.includes(t) || t.includes(pn));
-                });
-                return part && part.lat != null && part.lng != null
-                    ? { lat: part.lat, lng: part.lng }
-                    : null;
+                const p = pool.find(p => p.name === name)
+                    || pool.find(p => norm(p.name) === t)
+                    || pool.find(p => {
+                        const pn = norm(p.name);
+                        return pn.length >= 2 && t.length >= 2 && (pn.includes(t) || t.includes(pn));
+                    });
+                return p && p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null;
             };
 
-            let unmatched = 0;
-            course.steps = course.steps.map((step: any) => {
-                const coords = coordsOf(step.name);
-                if (!coords) unmatched++;
-                return coords ? { ...step, ...coords } : { ...step, lat, lng };
-            });
-            if (unmatched) console.warn(`[course] 좌표 매칭 실패 ${unmatched}/${course.steps.length} — 중심좌표 폴백`);
+            const region = (locationName || '').split(' ')[0] || locationName;
+            const resolved: { step: any; coords: { lat: number; lng: number } | null }[] =
+                course.steps.map((step: any) => ({ step, coords: matchPool(step.name) }));
+
+            // 후보에 없던 이름 → Kakao에서 직접 검색해 좌표 확보
+            const misses = resolved.filter(r => !r.coords);
+            if (misses.length) {
+                const geo = await Promise.all(
+                    misses.map(r => geocodeNamed(r.step.name, region, lat, lng).catch(() => null)),
+                );
+                misses.forEach((r, i) => { if (geo[i]) r.coords = { lat: geo[i]!.lat, lng: geo[i]!.lng }; });
+            }
+
+            const stillMissing = resolved.filter(r => !r.coords).length;
+            course.steps = resolved.map(r => r.coords ? { ...r.step, ...r.coords } : { ...r.step, lat, lng });
+            if (stillMissing) console.warn(`[course] 좌표 미해결 ${stillMissing}/${course.steps.length} — 중심좌표 폴백`);
         }
 
         if (anchorName) course.anchor = anchorName;

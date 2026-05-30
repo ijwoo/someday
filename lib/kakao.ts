@@ -336,6 +336,36 @@ export async function searchNearby(
     return capped.slice(0, MAX_CANDIDATES_BY_TRIP[tripType] ?? 34)
 }
 
+// 이름으로 좌표 조회 (지역 힌트와 함께)
+// AI가 후보 목록 밖의 유명 장소(예: 부산 '이재모피자')를 코스에 넣었을 때,
+// 그 이름을 Kakao에서 검색해 실제 좌표를 확보한다. 없으면 null.
+export async function geocodeNamed(
+    name: string, region: string, baseLat: number, baseLng: number,
+): Promise<{ name: string; lat: number; lng: number; distance: number } | null> {
+    const q = region ? `${region} ${name}` : name
+    const res = await fetch(
+        `${KAKAO_BASE}/v2/local/search/keyword.json?query=${encodeURIComponent(q)}&size=5&sort=accuracy`,
+        { headers },
+    )
+    const data = await res.json()
+    const docs = (data.documents || []).filter((d: any) => !isExcluded(d.place_name))
+    if (!docs.length) return null
+    const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase()
+    const t = norm(name)
+    // 이름이 실제로 닮은 결과를 우선, 없으면 가장 정확도 높은 첫 결과
+    const pick = docs.find((d: any) => {
+        const pn = norm(d.place_name)
+        return pn.length >= 2 && t.length >= 2 && (pn.includes(t) || t.includes(pn))
+    }) || docs[0]
+    const pLat = parseFloat(pick.y), pLng = parseFloat(pick.x)
+    return {
+        name: pick.place_name,
+        lat: pLat,
+        lng: pLng,
+        distance: Math.round(haversine(baseLat, baseLng, pLat, pLng)),
+    }
+}
+
 // 사진 속 "그 장소" = 코스의 주인공(앵커)
 // 사진이 찍힌 좌표에 가장 가까운 '여행할 만한 곳'을 찾는다.
 // (관광명소/문화시설/가볼만한곳 중 좌표에 가장 가까운 것)
