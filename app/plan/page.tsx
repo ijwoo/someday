@@ -12,7 +12,7 @@ import type { TripType, Theme, Course, CourseStep, RegenInfo } from '@/types'
 
 const TAG = { food:'맛집', view:'뷰맛집', cafe:'카페', culture:'문화' }
 const TAG_COLOR = { food:'chip-rose', view:'chip-blue', cafe:'chip-amber', culture:'chip-teal' }
-const DAY_COLORS: Record<number, string> = { 1:'#191f28', 2:'#4e5968', 3:'#8b95a1' }
+const DAY_COLORS: Record<number, string> = { 1:'#3182f6', 2:'#3182f6', 3:'#3182f6' }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371
@@ -245,11 +245,11 @@ export default function PlanPage() {
 
           <div style={{
             display:'inline-flex', alignItems:'center', gap:5,
-            background:'rgba(25,31,40,0.82)', color:'#fff',
+            background:'var(--blue)', color:'var(--on-accent)',
             fontSize:11, fontWeight:700, padding:'4px 12px', borderRadius:20,
             marginBottom:10, width:'fit-content', letterSpacing:0.1,
           }}>
-            <Icon name="sparkle" size={11} color="#fff" strokeWidth={2}/>
+            <Icon name="sparkle" size={11} color="var(--on-accent)" strokeWidth={2}/>
             AI 추천 코스
           </div>
 
@@ -307,7 +307,7 @@ export default function PlanPage() {
           flexShrink:0, marginLeft:'auto', display:'flex', alignItems:'center', gap:6,
           padding:'7px 14px', borderRadius:20,
           fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit',
-          background:'rgba(25,31,40,0.08)', border:'none', color:'var(--blue)',
+          background:'color-mix(in srgb, var(--blue) 8%, transparent)', border:'none', color:'var(--blue)',
         }}>
           <Icon name="navigation" size={13} color="var(--blue)" strokeWidth={2}/>
           지도
@@ -583,7 +583,7 @@ function TLItem({ item, idx, last, visited, isAnchor, onToggleVisit, onMore, day
             width:24, height:24, borderRadius:'50%', flexShrink:0, cursor:'pointer',
             background: visited ? '#191f28' : dayColor,
             border: 'none',
-            boxShadow: visited ? '0 0 0 3px rgba(25,31,40,0.2)' : `0 0 0 3px ${dayColor}30`,
+            boxShadow: visited ? '0 0 0 3px color-mix(in srgb, var(--blue) 20%, transparent)' : `0 0 0 3px ${dayColor}30`,
             display:'flex', alignItems:'center', justifyContent:'center',
             transition:'all 0.2s',
           }}
@@ -602,8 +602,8 @@ function TLItem({ item, idx, last, visited, isAnchor, onToggleVisit, onMore, day
           className="glass"
           style={{
             borderRadius:18, overflow:'hidden', cursor:'pointer', transition:'transform 0.12s',
-            border: isAnchor ? '1.5px solid rgba(25,31,40,0.55)' : undefined,
-            boxShadow: isAnchor ? '0 4px 18px rgba(25,31,40,0.18)' : undefined,
+            border: isAnchor ? '1.5px solid color-mix(in srgb, var(--blue) 55%, transparent)' : undefined,
+            boxShadow: isAnchor ? '0 4px 18px color-mix(in srgb, var(--blue) 18%, transparent)' : undefined,
           }}
           onClick={openKakaoMap}
           onTouchStart={e => (e.currentTarget.style.transform='scale(0.98)')}
@@ -643,9 +643,9 @@ function TLItem({ item, idx, last, visited, isAnchor, onToggleVisit, onMore, day
             {isAnchor && (
               <div style={{
                 display:'inline-flex', alignItems:'center', gap:4, marginBottom:6,
-                background:'linear-gradient(135deg, rgba(25,31,40,0.14), rgba(78,89,104,0.08))',
+                background:'linear-gradient(135deg, color-mix(in srgb, var(--blue) 14%, transparent), rgba(78,89,104,0.08))',
                 color:'var(--blue)', fontSize:10, fontWeight:700, padding:'3px 9px', borderRadius:8,
-                border:'1px solid rgba(25,31,40,0.2)', letterSpacing:-0.1,
+                border:'1px solid color-mix(in srgb, var(--blue) 20%, transparent)', letterSpacing:-0.1,
               }}>
                 📷 사진 속 그곳
               </div>
@@ -789,7 +789,7 @@ function MapView({ course, region, onBack }: { course:Course; region:{name:strin
           position:'absolute', bottom:0, left:0, right:0,
           background:'var(--sheet)', backdropFilter:'blur(28px) saturate(200%)', WebkitBackdropFilter:'blur(28px) saturate(200%)',
           border:'1px solid var(--glass-border)', borderBottom:'none',
-          borderRadius:'24px 24px 0 0', boxShadow:'0 -4px 24px rgba(25,31,40,0.10)',
+          borderRadius:'24px 24px 0 0', boxShadow:'0 -4px 24px color-mix(in srgb, var(--blue) 10%, transparent)',
           padding:'14px 18px', paddingBottom:'max(18px, env(safe-area-inset-bottom))', zIndex:10,
         }}>
           <div style={{ width:36, height:4, borderRadius:2, background:'var(--border-hair)', margin:'0 auto 14px' }}/>

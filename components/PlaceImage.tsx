@@ -41,7 +41,7 @@ export default function PlaceImage({ badge, width, height, style }: Props) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       ...style,
     }}>
-      <Glyph size={iconSize} color="var(--blue)" strokeWidth={1.5} />
+      <Glyph size={iconSize} color="var(--text3)" strokeWidth={1.5} />
     </div>
   )
 }

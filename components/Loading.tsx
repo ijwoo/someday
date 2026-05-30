@@ -44,7 +44,7 @@ export default function Loading({
           <div style={{
             width: 28, height: 28, borderRadius: '50%',
             background: 'linear-gradient(135deg, var(--blue), var(--blue2))',
-            boxShadow: '0 4px 12px rgba(25,31,40,0.3)',
+            boxShadow: '0 4px 12px color-mix(in srgb, var(--blue) 30%, transparent)',
           }} />
         </div>
       </div>

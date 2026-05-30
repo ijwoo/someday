@@ -84,7 +84,7 @@ export default function SavedPage() {
           <div style={{ padding: '60px 28px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
             <div style={{
               width: 84, height: 84, borderRadius: 26,
-              background: 'rgba(25,31,40,0.08)', border: '1.5px dashed var(--dash)',
+              background: 'color-mix(in srgb, var(--blue) 8%, transparent)', border: '1.5px dashed var(--dash)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               <Icon name="bookmark" size={34} color="var(--blue3)" strokeWidth={1.2}/>
