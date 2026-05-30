@@ -117,7 +117,7 @@ JSON format:
 CRITICAL RULES:
 1. Every step MUST have "day": 1 or 2 (integer). Never omit.
 2. Day 1: 3-4 spots starting at ${startTime} (afternoon arrival feel). Day 2: 3-4 spots starting at 09:00.
-3. Geographic flow: Day 1 in one area, Day 2 explores a DIFFERENT direction/zone.
+3. Cover the WHOLE region, not one neighborhood. Treat this as a trip across the entire city/region (${locationName} and beyond), spanning multiple districts. Day 1 explores one district/area, Day 2 a clearly DIFFERENT district. Favor the region's iconic must-see spots even if farther — use the distance spread in the list.
 4. Total 6-8 spots. "order" is continuous across days (1,2,3...).
 5. badge: one of 관광명소/맛집/카페/문화/자연/쇼핑
 7. tags: array from [food, view, cafe, culture]
@@ -141,7 +141,7 @@ JSON format:
 CRITICAL RULES:
 1. Every step MUST have "day": 1, 2, or 3 (integer). NEVER omit the day field.
 2. Distribution: Day 1 = 3-4 spots (arrival + evening), Day 2 = 4-5 spots (full day), Day 3 = 3-4 spots (morning + departure).
-3. GEOGRAPHIC VARIETY: Each day must explore a DIFFERENT zone or direction from center. Use the distance spread in the place list to assign closer places to Day 1/3 and farther places to Day 2.
+3. COVER THE WHOLE REGION across 3 days — this is a trip through the entire city/region (${locationName} and beyond), NOT one neighborhood. Each day explores a DIFFERENT district/zone. Prioritize the region's signature must-see landmarks even when they are far apart, using the distance spread to assign closer places to Day 1/3 and the farther iconic spots to Day 2.
 4. Total 10-13 spots. "order" is continuous (1,2,3...) across all days.
 5. Time: Day 1 starts at ${startTime}, Day 2 starts 09:00, Day 3 starts 09:00.
 6. badge: one of 관광명소/맛집/카페/문화/자연/쇼핑

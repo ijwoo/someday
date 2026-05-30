@@ -88,10 +88,10 @@ export function formatLocationName(address: string): string {
     return si
 }
 
-// 광역 검색용 지역 키워드 (도 레벨 → 짧게)
-// 예) "제주특별자치도 제주시 애월읍" → "제주"
-//     "부산광역시 해운대구"          → "부산 해운대"
-export function extractRegion(address: string): string {
+// 광역 검색용 지역 키워드
+// broad=false: "부산광역시 해운대구" → "부산 해운대" (당일치기 — 구 단위)
+// broad=true : "부산광역시 해운대구" → "부산"        (숙박 여행 — 도시 전체)
+export function extractRegion(address: string, broad = false): string {
     const parts = address.split(' ')
     if (parts.length === 0) return address
     const p0 = parts[0]
@@ -100,6 +100,7 @@ export function extractRegion(address: string): string {
 
     if (isMetro) {
         const city = p0.replace(/특별자치시|특별시|광역시/, '')
+        if (broad) return city // 숙박 여행: 도시 전체를 검색 (구로 좁히지 않음)
         const gu = (parts[1] || '').replace(/[구]$/, '')
         return gu ? `${city} ${gu}` : city
     }
@@ -137,11 +138,16 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string> 
         || '알 수 없는 위치';
 }
 
-// tripType별 검색 설정
+// tripType별 검색 설정 (radius는 Kakao 카테고리 검색 상한 20km 이내)
 const SEARCH_CONFIG = {
     day:    { radius: 10000, size: 15 },
-    '1n2d': { radius: 15000, size: 15 },
+    '1n2d': { radius: 18000, size: 15 },
     '2n3d': { radius: 20000, size: 15 },
+}
+
+// tripType별 최종 후보 수 — 숙박이 길수록 도시 전역을 커버하도록 더 많이
+const MAX_CANDIDATES_BY_TRIP: Record<string, number> = {
+    day: 34, '1n2d': 42, '2n3d': 52,
 }
 
 // 후보 랭킹 — 명소/자연/문화를 식당·카페보다 우선
@@ -152,7 +158,6 @@ const CATEGORY_WEIGHT: Record<string, number> = {
 const CATEGORY_CAP: Record<string, number> = {
     '관광명소': 16, '자연': 8, '문화시설': 8, '쇼핑': 6, '맛집': 12, '카페': 8,
 }
-const MAX_CANDIDATES = 34
 
 // 카테고리 검색 (반경 기반 — 당일치기용)
 async function searchByCategory(
@@ -245,7 +250,8 @@ export async function searchNearby(
     locationName = '',
 ) {
     const { radius, size } = SEARCH_CONFIG[tripType] ?? SEARCH_CONFIG.day
-    const region = extractRegion(locationName)
+    // 숙박 여행은 도시 전체(부산 등)를 검색해 한 동네에 갇히지 않게 한다
+    const region = extractRegion(locationName, tripType !== 'day')
 
     let all: any[]
 
@@ -266,22 +272,23 @@ export async function searchNearby(
         // 반경 검색과 광역 검색 병행 → 가까운 곳 + 멀리 퍼진 명소 모두 확보
         const [
             nearLandmarks, nearCulture, nearFood, nearCafe,
-            wideAttractions, wideFood, wideCafe, wideNature,
+            wideAttractions, wideMustSee, wideFood, wideCafe, wideNature,
         ] = await Promise.all([
             // 반경 기반 (가까운 곳 우선 확보)
             searchByCategory('AT4', '관광명소', lat, lng, radius, size),
             searchByCategory('CT1', '문화시설', lat, lng, radius, size),
             searchByKeyword('맛집', '맛집', lat, lng, radius, size),
             searchByKeyword('카페', '카페', lat, lng, Math.min(radius, 10000), size),
-            // 광역 키워드 검색 (지역 전체 커버)
+            // 광역 키워드 검색 (도시 전역 커버 — 여러 구·지역의 대표 명소 확보)
             searchRegional(`${region} 관광명소`, '관광명소', lat, lng),
+            searchRegional(`${region} 가볼만한곳`, '관광명소', lat, lng),
             searchRegional(`${region} 맛집 현지`, '맛집', lat, lng),
             searchRegional(`${region} 카페`, '카페', lat, lng),
             searchRegional(`${region} 자연 명소`, '자연', lat, lng),
         ])
         all = [
             ...nearLandmarks, ...nearCulture, ...nearFood, ...nearCafe,
-            ...wideAttractions, ...wideFood, ...wideCafe, ...wideNature,
+            ...wideAttractions, ...wideMustSee, ...wideFood, ...wideCafe, ...wideNature,
         ]
     }
 
@@ -311,7 +318,7 @@ export async function searchNearby(
         (CATEGORY_WEIGHT[b.category] ?? 1) - (CATEGORY_WEIGHT[a.category] ?? 1)
         || a.distance - b.distance,
     )
-    return capped.slice(0, MAX_CANDIDATES)
+    return capped.slice(0, MAX_CANDIDATES_BY_TRIP[tripType] ?? 34)
 }
 
 // 사진 속 "그 장소" = 코스의 주인공(앵커)
