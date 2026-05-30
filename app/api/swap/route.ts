@@ -16,9 +16,16 @@ export async function POST(req: NextRequest) {
 
         const spot = await generateReplacement(locationName, places, currentNames, target, theme);
 
-        // Kakao places 데이터로 좌표 보강
+        // Kakao places 데이터로 좌표 보강 (정규화·부분일치로 강건하게)
         if (Array.isArray(places)) {
-            const match = places.find((p: any) => p.name === spot.name);
+            const norm = (s: string) => (s || '').replace(/\s+/g, '').toLowerCase();
+            const t = norm(spot.name);
+            const match = places.find((p: any) => p.name === spot.name)
+                || places.find((p: any) => norm(p.name) === t)
+                || places.find((p: any) => {
+                    const pn = norm(p.name);
+                    return pn.length >= 2 && t.length >= 2 && (pn.includes(t) || t.includes(pn));
+                });
             if (match && match.lat != null && match.lng != null) {
                 spot.lat = match.lat;
                 spot.lng = match.lng;
