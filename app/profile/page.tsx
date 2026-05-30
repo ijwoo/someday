@@ -53,7 +53,7 @@ export default function ProfilePage() {
             width: 72, height: 72, borderRadius: '50%',
             background: 'linear-gradient(135deg, var(--blue), var(--blue2))',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 6px 20px rgba(25,31,40,0.28)',
+            boxShadow: '0 6px 20px color-mix(in srgb, var(--blue) 28%, transparent)',
           }}>
             <Icon name="person" size={32} color="#fff" strokeWidth={1.5}/>
           </div>
@@ -74,7 +74,7 @@ export default function ProfilePage() {
               cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
             }}
           >
-            <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(25,31,40,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ width: 42, height: 42, borderRadius: 12, background: 'color-mix(in srgb, var(--blue) 10%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Icon name="bookmark" size={20} color="var(--blue)" strokeWidth={1.8}/>
             </div>
             <div style={{ flex: 1 }}>
@@ -94,7 +94,7 @@ export default function ProfilePage() {
               display: 'flex', alignItems: 'center', gap: 14,
               padding: '14px 18px', borderBottom: '1px solid var(--border-hair)',
             }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(25,31,40,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'color-mix(in srgb, var(--blue) 8%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon name="moon" size={16} color="var(--blue)" strokeWidth={1.8}/>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -118,7 +118,7 @@ export default function ProfilePage() {
                         border: 'none', transition: 'background 0.18s, color 0.18s',
                         background: isSel ? 'var(--blue)' : 'transparent',
                         color: isSel ? '#fff' : 'var(--text3)',
-                        boxShadow: isSel ? '0 2px 8px rgba(25,31,40,0.3)' : 'none',
+                        boxShadow: isSel ? '0 2px 8px color-mix(in srgb, var(--blue) 30%, transparent)' : 'none',
                       }}
                     >
                       {opt.label}
@@ -133,7 +133,7 @@ export default function ProfilePage() {
               borderBottom: '1px solid var(--border-hair)',
               cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
             }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(25,31,40,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'color-mix(in srgb, var(--blue) 8%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon name="sparkle" size={16} color="var(--blue)" strokeWidth={1.8}/>
               </div>
               <div style={{ flex: 1 }}>
@@ -153,7 +153,7 @@ export default function ProfilePage() {
                 <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: -0.2, color: 'var(--text2)' }}>더 많은 기능</div>
                 <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>준비 중이에요</div>
               </div>
-              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--blue)', background: 'rgba(25,31,40,0.1)', padding: '3px 8px', borderRadius: 6 }}>Soon</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--blue)', background: 'color-mix(in srgb, var(--blue) 10%, transparent)', padding: '3px 8px', borderRadius: 6 }}>Soon</span>
             </div>
           </div>
         </div>

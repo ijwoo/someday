@@ -56,13 +56,13 @@
     color-scheme: dark;
     --bg: #17171c;
     --bg2: #1c1d22;
-    /* 다크 모노크롬 — 액센트는 near-white */
-    --blue: #f2f4f6;
-    --blue2: #d1d6db;
-    --blue3: #3a3b41;
-    --blue4: #26272c;
-    --blue-dark: #ffffff;
-    --on-accent: #17171c;
+    /* 다크도 동일한 블루 액센트로 통일 */
+    --blue: #4593fc;
+    --blue2: #5b9dfd;
+    --blue3: #2b3a55;
+    --blue4: #1b2436;
+    --blue-dark: #4593fc;
+    --on-accent: #ffffff;
     --text: #f2f4f6;
     --text2: #b0b8c1;
     --text3: #6b7684;
@@ -94,12 +94,12 @@
   color-scheme: dark;
   --bg: #17171c;
   --bg2: #1c1d22;
-  --blue: #f2f4f6;
-  --blue2: #d1d6db;
-  --blue3: #3a3b41;
-  --blue4: #26272c;
-  --blue-dark: #ffffff;
-  --on-accent: #17171c;
+  --blue: #4593fc;
+  --blue2: #5b9dfd;
+  --blue3: #2b3a55;
+  --blue4: #1b2436;
+  --blue-dark: #4593fc;
+  --on-accent: #ffffff;
   --text: #f2f4f6;
   --text2: #b0b8c1;
   --text3: #6b7684;
@@ -244,8 +244,8 @@ body {
   border-radius: var(--r-xs);
   letter-spacing: -0.2px;
 }
-/* 블랙&화이트 — 칩도 모노크롬으로 통일 */
-.chip-blue   { background: var(--blue4); color: var(--text); }
+/* 태그 칩 — 한 가지 중립 스타일로 통일 (색 산만 방지) */
+.chip-blue   { background: var(--surface); color: var(--text2); }
 .chip-teal   { background: var(--surface); color: var(--text2); }
 .chip-rose   { background: var(--surface); color: var(--text2); }
 .chip-amber  { background: var(--surface); color: var(--text2); }
