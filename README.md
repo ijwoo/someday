@@ -4,6 +4,8 @@
 
 사진 한 장으로 장소를 인식하고, Claude AI가 최적 여행 코스를 만들어주는 모바일 웹앱입니다.
 
+**[데모](https://someday-topaz.vercel.app)** · **[프로젝트 소개](https://imjaewoo.dev/work/someday)**
+
 ## 주요 기능
 
 - **사진 → 장소 인식** : EXIF GPS 좌표 또는 Claude Vision으로 사진 속 장소를 자동 분석
@@ -82,7 +84,7 @@ npm install
 npm run dev
 ```
 
-[http://localhost:3000](http://localhost:3000) 에서 확인하세요.
+[http://localhost:3000](http://localhost:3000) 에서 확인할 수 있습니다.
 
 ### 빌드 & 배포
 
